@@ -28,6 +28,7 @@ OPT_DURATION=""
 OPT_VERBOSE=0
 OPT_VERBOSE_ON_TTY=0
 OPT_ADD_SILENCE_SEC=0
+OPT_DEBUG_MODE=0
 
 #----[temp files and termination]--------------------------------------------
 
@@ -182,7 +183,7 @@ do
         -c) OPT_CONFIG_FILEPATH="$2"; shift 2;;
         -D) OPT_DURATION="$2"; shift 2;;
         -s) OPT_ADD_SILENCE_SEC=$2; shift 2;;
-        -x) set -x; shift 1;;
+        -x) OPT_DEBUG_MODE=1; set -x; shift 1;;
         -v) OPT_VERBOSE=1; shift 1;;
         -t) OPT_VERBOSE_ON_TTY=1; shift 1;;
         -h) usage; exit 0;;
@@ -370,6 +371,8 @@ case $OPT_OP in
         sleep 2
 
         (
+            ((OPT_DEBUG_MODE)) && { set -x; }
+
             ffmpeg \
                 -loglevel quiet \
                 -re \

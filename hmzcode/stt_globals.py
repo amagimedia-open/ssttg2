@@ -40,6 +40,8 @@ G_OFLAGS_APPEND_MODE = False
 G_OFLAGS_APPEND_NULL_CHAR = True
 G_LOGGER_STREAM = "stderr"
 
+main_logger = None
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.stderr.flush()

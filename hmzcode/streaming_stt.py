@@ -76,11 +76,14 @@ def listen_print_loop(q, responses, stream_obj):
     the next result to overwrite it, until the response is a final one. For the
     final one, print a newline to preserve the finalized transcription.
     """
+
+    global main_logger
+
     num_chars_printed = 0
     for response in responses:
         if stream_obj.consumed_ms >= G_STREAMING_LIMIT:
             #stream_obj.stream_time = get_current_time ()
-            eprint (f"timeout breaking out of responses loop, consumed_ms={stream_obj.consumed_ms}")
+            main_logger.info(f"timeout breaking out of responses loop, consumed_ms={stream_obj.consumed_ms}")
             #break
 
         if not response.results:
@@ -194,7 +197,7 @@ class ReadGen(threading.Thread):
             #else:
             #    print ('Got syncbyte')
             if (audio_header_get_data_length (data)) == 0:
-                self.logger.warn ("Received audio packet with length=0, Exiting...")
+                main_logger.warn ("Received audio packet with length=0, Exiting...")
                 stt_globals.G_EXIT_FLAG = True
                 break
             self.q.put (data)
@@ -234,6 +237,8 @@ class GeneratorClass ():
         return data[G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN]
 
     def get_bytes (self):
+        global main_logger
+
         data = self.stream.get_data_from_pts ()
         if data:
             yield data
@@ -245,16 +250,19 @@ class GeneratorClass ():
                 self.stream.consumed_ms += G_CHUNK_MS
                 yield data
             except:
-                eprint(traceback.format_exc(), flush=True)
+                main_logger.error(traceback.format_exc())
                 os._exit(1)
 
 
         self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
 
 def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
+
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     global G_EXIT_FLAG
+    global main_logger
+
     language_code = 'en-US'  # a BCP-47 language tag
 
     q_obj = queue.Queue ()
@@ -273,9 +281,9 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
                 if line:
                     phrases.append (line.strip().encode ('ascii', 'ignore').decode('ascii'))
     except FileNotFoundError:
-        eprint (f"Phrases file {phrases_fname} is not present.")
+        main_logger.info(f"Phrases file {phrases_fname} is not present.")
     except:
-        eprint(traceback.format_exc(), flush=True)
+        main_logger.error(traceback.format_exc())
  
     speech_context = speech.SpeechContext(phrases=phrases[:5000])
     try:
@@ -293,17 +301,16 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
             config=config,
             interim_results=True)
     except google.auth.exceptions.DefaultCredentialsError:
-        eprint ("Export authorization json in environment", flush=True)
+        main_logger.error("Export authorization json in environment")
         response_to_srt_obj.exit_flag = True
         response_to_srt_obj.join ()
         sys.exit(1)
     except:
-        eprint(traceback.format_exc(), flush=True)
+        main_logger.error(traceback.format_exc())
         sys.exit(1)
 
     stream_obj = StreamDataStructure ()
-
-    eprint (f"Number of phrases as context = {len(phrases)}")
+    main_logger.info(f"Number of phrases as context = {len(phrases)}")
 
     reader = ReadGen (audio_pipe_fname, G_CHUNK_SIZE_BYTES, audio_q, \
             exit_on_zero_size=G_IFLAGS_EXIT_ON_ZERO_SIZE)
@@ -325,37 +332,41 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
             stream_obj.restart_counter += 1
             stream_obj.last_iter_consumed_ms += stream_obj.consumed_ms
             stream_obj.consumed_ms = 0
-            eprint (f"===============RETRY AFTER 5MIN======last_sent={stream_obj.last_sub_pts}", flush=True)
+            main_logger.info("===============RETRY AFTER 5MIN======last_sent={stream_obj.last_sub_pts}")
             if len(stream_obj.audio_pts_map.keys ()) > 0:
                 lk = list(stream_obj.audio_pts_map.keys ())[-1]
-                eprint (f"===audio_pts_map[{lk}] = {stream_obj.audio_pts_map[lk]}===========", flush=True)
+                main_logger.info(f"===audio_pts_map[{lk}] = {stream_obj.audio_pts_map[lk]}===========")
 
         except google.api_core.exceptions.ServiceUnavailable:
-            eprint ("===============ServiceUnavailable exception.===RETRY===================", flush=True)
-            #generator_obj.exit_flag = True
+            main_logger.info("===============ServiceUnavailable exception.===RETRY===================")
             time.sleep (5)
         except:
-            eprint(traceback.format_exc(), flush=True)
+            main_logger.error(traceback.format_exc())
             response_to_srt_obj.exit_flag = True 
             generator_obj.exit_flag = True
             response_to_srt_obj.join ()
-            eprint ("## Exited writer")
+            main_logger.info ("## Exited writer")
             G_EXIT_FLAG = True
             break
 
 def validate_configuration(config):
 
+    global main_logger
+
     if (not G_FILES_SECTION_NAME in config):
-        eprint("FILES section not present in configuration file")
+        main_logger.error(G_FILES_SECTION_NAME + " section not present in configuration file")
         sys.exit(1)
 
     if (not G_PHRASES_PATH_CFG_NAME in config[G_FILES_SECTION_NAME]):
-        eprint(G_PHRASES_PATH_CFG_NAME, "not present in configuration")
+        main_logger.error(G_PHRASES_PATH_CFG_NAME + " not present in configuration")
         sys.exit(1)
 
 def dump_configuration(config):
+
+    global main_logger
+
     #https://stackoverflow.com/questions/23662280/how-to-log-the-contents-of-a-configparser
-    eprint({section: dict(config[section]) for section in config.sections()})
+    main_logger.info({section: dict(config[section]) for section in config.sections()})
 
 def apply_configuration(config):
 
@@ -416,30 +427,36 @@ def apply_configuration(config):
 
 def dump_parameters():
 
-    eprint("#--- Fixed Audio recording parameters ---")
-    eprint("G_BYTE_PER_SAMPLE = ", G_BYTE_PER_SAMPLE)
-    eprint("G_AUD_SAMPLING_RATE = ", G_AUD_SAMPLING_RATE)
-    eprint("G_CHUNK_MS = ", G_CHUNK_MS)
-    eprint("G_CHUNK_SIZE_BYTES = ", G_CHUNK_SIZE_BYTES)
+    global main_logger
 
-    eprint("#--- Fixed Input packet parameters ---")
-    eprint("G_AUDIO_HEADER_LEN = ", G_AUDIO_HEADER_LEN)
+    main_logger.info("#--- Fixed Audio recording parameters ---")
+    main_logger.info("G_BYTE_PER_SAMPLE = ", G_BYTE_PER_SAMPLE)
+    main_logger.info("G_AUD_SAMPLING_RATE = ", G_AUD_SAMPLING_RATE)
+    main_logger.info("G_CHUNK_MS = ", G_CHUNK_MS)
+    main_logger.info("G_CHUNK_SIZE_BYTES = ", G_CHUNK_SIZE_BYTES)
 
-    eprint("#--- Translation process parameters ---")
-    eprint("G_MIN_WORD_DRAIN_DELAY = ", stt_globals.G_MIN_WORD_DRAIN_DELAY)
-    eprint("G_MAX_INTER_WORD_DURATION = ", stt_globals.G_MAX_INTER_WORD_DURATION)
-    eprint("G_MAX_SUBTITLE_LINE_DURATION = ", stt_globals.G_MAX_SUBTITLE_LINE_DURATION)
-    eprint("G_MAX_CHARS_IN_SUB_ROW = ", stt_globals.G_MAX_CHARS_IN_SUB_ROW)
-    eprint("G_MAX_WORDS_TO_SEARCH = ", stt_globals.G_MAX_WORDS_TO_SEARCH)
-    eprint("G_STREAMING_LIMIT = ", G_STREAMING_LIMIT)
-    eprint("G_MAX_AUDIO_BUFFER = ", G_MAX_AUDIO_BUFFER)
+    main_logger.info("#--- Fixed Input packet parameters ---")
+    main_logger.info("G_AUDIO_HEADER_LEN = ", G_AUDIO_HEADER_LEN)
+
+    main_logger.info("#--- Translation process parameters ---")
+    main_logger.info("G_MIN_WORD_DRAIN_DELAY = ", stt_globals.G_MIN_WORD_DRAIN_DELAY)
+    main_logger.info("G_MAX_INTER_WORD_DURATION = ", stt_globals.G_MAX_INTER_WORD_DURATION)
+    main_logger.info("G_MAX_SUBTITLE_LINE_DURATION = ", stt_globals.G_MAX_SUBTITLE_LINE_DURATION)
+    main_logger.info("G_MAX_CHARS_IN_SUB_ROW = ", stt_globals.G_MAX_CHARS_IN_SUB_ROW)
+    main_logger.info("G_MAX_WORDS_TO_SEARCH = ", stt_globals.G_MAX_WORDS_TO_SEARCH)
+    main_logger.info("G_STREAMING_LIMIT = ", G_STREAMING_LIMIT)
+    main_logger.info("G_MAX_AUDIO_BUFFER = ", G_MAX_AUDIO_BUFFER)
 
 def usage():
-    eprint("TODO: usage")
+    global main_logger
+
+    main_logger.info("TODO: usage")
 
 if __name__ == '__main__':
 
     global G_EXIT_FLAG
+    global main_logger
+
     opt_cfg_path = ""
     opt_verbose = False
     opt_no_run = False
@@ -483,9 +500,15 @@ if __name__ == '__main__':
     opt_gcp_auth_path = args.gcp_auth_path
     opt_dump_gcp_response = args.dump_gcp_response
     stt_globals.G_LOGGER_STREAM = args.logger_stream
+
+    # see stt_globals.py
+    main_logger = amg_logger.amagi_logger (
+                  "com.amagi.stt.main", 
+                  amg_logger.LOG_INFO, 
+                  log_stream=stt_globals.G_LOGGER_STREAM)
     
     if (not os.path.isfile (opt_cfg_path)):
-        eprint("configuration file", opt_cfg_path, "not found")
+        main_logger.error(f "configuration file {opt_cfg_path} not found")
         sys.exit(1)
 
     config = configparser.ConfigParser()
@@ -515,11 +538,14 @@ if __name__ == '__main__':
                  opt_output_srt,
                  config[G_FILES_SECTION_NAME].get(G_PHRASES_PATH_CFG_NAME),
                  opt_verbose)
+            main_logger.info("main() over")
         except KeyboardInterrupt:
             G_EXIT_FLAG = True
             sys.exit(0)
         except:
-            eprint(traceback.format_exc())
+            main_logger.error(traceback.format_exc())
             sys.exit(1)
-    eprint ("### Exited Main")
+
+    main_logger.info ("### Exited Main")
     os._exit(0)
+
