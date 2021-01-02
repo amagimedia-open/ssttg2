@@ -366,7 +366,8 @@ def dump_configuration(config):
     global main_logger
 
     #https://stackoverflow.com/questions/23662280/how-to-log-the-contents-of-a-configparser
-    main_logger.info({section: dict(config[section]) for section in config.sections()})
+    #TODO: main_logger.info
+    eprint({section: dict(config[section]) for section in config.sections()})
 
 def apply_configuration(config):
 
@@ -430,22 +431,22 @@ def dump_parameters():
     global main_logger
 
     main_logger.info("#--- Fixed Audio recording parameters ---")
-    main_logger.info("G_BYTE_PER_SAMPLE = ", G_BYTE_PER_SAMPLE)
-    main_logger.info("G_AUD_SAMPLING_RATE = ", G_AUD_SAMPLING_RATE)
-    main_logger.info("G_CHUNK_MS = ", G_CHUNK_MS)
-    main_logger.info("G_CHUNK_SIZE_BYTES = ", G_CHUNK_SIZE_BYTES)
+    main_logger.info(f"G_BYTE_PER_SAMPLE = {G_BYTE_PER_SAMPLE}")
+    main_logger.info(f"G_AUD_SAMPLING_RATE = {G_AUD_SAMPLING_RATE}")
+    main_logger.info(f"G_CHUNK_MS = {G_CHUNK_MS}")
+    main_logger.info(f"G_CHUNK_SIZE_BYTES = {G_CHUNK_SIZE_BYTES}")
 
     main_logger.info("#--- Fixed Input packet parameters ---")
-    main_logger.info("G_AUDIO_HEADER_LEN = ", G_AUDIO_HEADER_LEN)
+    main_logger.info(f"G_AUDIO_HEADER_LEN = {G_AUDIO_HEADER_LEN}")
 
     main_logger.info("#--- Translation process parameters ---")
-    main_logger.info("G_MIN_WORD_DRAIN_DELAY = ", stt_globals.G_MIN_WORD_DRAIN_DELAY)
-    main_logger.info("G_MAX_INTER_WORD_DURATION = ", stt_globals.G_MAX_INTER_WORD_DURATION)
-    main_logger.info("G_MAX_SUBTITLE_LINE_DURATION = ", stt_globals.G_MAX_SUBTITLE_LINE_DURATION)
-    main_logger.info("G_MAX_CHARS_IN_SUB_ROW = ", stt_globals.G_MAX_CHARS_IN_SUB_ROW)
-    main_logger.info("G_MAX_WORDS_TO_SEARCH = ", stt_globals.G_MAX_WORDS_TO_SEARCH)
-    main_logger.info("G_STREAMING_LIMIT = ", G_STREAMING_LIMIT)
-    main_logger.info("G_MAX_AUDIO_BUFFER = ", G_MAX_AUDIO_BUFFER)
+    main_logger.info(f"G_MIN_WORD_DRAIN_DELAY = {stt_globals.G_MIN_WORD_DRAIN_DELAY}")
+    main_logger.info(f"G_MAX_INTER_WORD_DURATION = {stt_globals.G_MAX_INTER_WORD_DURATION}")
+    main_logger.info(f"G_MAX_SUBTITLE_LINE_DURATION = {stt_globals.G_MAX_SUBTITLE_LINE_DURATION}")
+    main_logger.info(f"G_MAX_CHARS_IN_SUB_ROW = {stt_globals.G_MAX_CHARS_IN_SUB_ROW}")
+    main_logger.info(f"G_MAX_WORDS_TO_SEARCH = {stt_globals.G_MAX_WORDS_TO_SEARCH}")
+    main_logger.info(f"G_STREAMING_LIMIT = {G_STREAMING_LIMIT}")
+    main_logger.info(f"G_MAX_AUDIO_BUFFER = {G_MAX_AUDIO_BUFFER}")
 
 def usage():
     global main_logger
@@ -508,7 +509,7 @@ if __name__ == '__main__':
                   log_stream=stt_globals.G_LOGGER_STREAM)
     
     if (not os.path.isfile (opt_cfg_path)):
-        main_logger.error(f "configuration file {opt_cfg_path} not found")
+        main_logger.error(f"configuration file {opt_cfg_path} not found")
         sys.exit(1)
 
     config = configparser.ConfigParser()
