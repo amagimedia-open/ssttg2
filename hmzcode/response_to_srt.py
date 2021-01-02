@@ -28,14 +28,17 @@ def milliseconds_to_HMS (ms):
 
 class ResponseToSRT (threading.Thread):
     def __init__(self, threadID, name, q,srt_fname, append_mode, \
-            append_null_char, dump_gcp_response = ""):
+            append_null_char, verbose_mode):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.q = q
         self.exit_flag = False
-        self.dump_gcp_response = dump_gcp_response
-        self.logger = amg_logger.amagi_logger ("com.amagi.stt.resp_to_srt", amg_logger.LOG_INFO, log_stream=stt_globals.G_LOGGER_STREAM)
+        self.verbose_mode = verbose_mode
+        self.logger = amg_logger.amagi_logger (
+                        "com.amagi.stt.resp_to_srt", 
+                        amg_logger.LOG_INFO, 
+                        log_stream=stt_globals.G_LOGGER_STREAM)
         if append_mode:
             self.open_mode = "a"
         else:
@@ -69,8 +72,9 @@ class ResponseToSRT (threading.Thread):
             #fp.write (text.strip() + "\n\n")
             srt_text += text.strip() + "\n\n"
             #fp.write (str(srt_text)+"\0")
-            fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii').upper()+self.null_char)
-            self.logger.info (srt_text.replace("\n", " "))#.encode('utf-8'))
+            #fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii').upper()+self.null_char)
+            fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii'))
+            self.logger.info ("srt_out: " + srt_text.replace("\n", " "))#.encode('utf-8'))
             #self.logger.info (srt_text.encode('utf-8'))
             self.last_srt_sub = [tc_in, tc_in+duration_ms, text]
 
@@ -261,18 +265,18 @@ class ResponseToSRT (threading.Thread):
             time_now = time.time ()
             try:
                 if result:
-                    if self.dump_gcp_response:
-                        with open (self.dump_gcp_response, "a") as fp:
-                            #fp.write (str(result).replace("\n", " ") + f"Time:{rtime}")
-                            #fp.write (f"\n==FINAL={result.is_final}==\n")
-                            fp.write (f"transcript:{result.transcript};; "\
-                                      f"stability:{result.stability};; "\
-                                      f"end_sec:{result.pts_seconds};; "\
-                                      f"end_nanos:{result.pts_nanos};; "\
-                                      f"time:{rtime};; "\
-                                      f"is_final:{result.is_final}"\
-                                      "\n\n")
-                            fp.flush ()
+                    if self.verbose_mode:
+                        #fp.write (str(result).replace("\n", " ") + f"Time:{rtime}")
+                        #fp.write (f"\n==FINAL={result.is_final}==\n")
+                        self.logger.info (\
+                               f"transcript:{result.transcript};; "\
+                               f"transcript:{result.transcript};; "\
+                               f"stability:{result.stability};; "\
+                               f"end_sec:{result.pts_seconds};; "\
+                               f"end_nanos:{result.pts_nanos};; "\
+                               f"time:{rtime};; "\
+                               f"is_final:{result.is_final}"\
+                               "\n\n")
                     cur_transcription = result.transcript
                     cur_timestamp = (stream.restart_counter * stt_globals.G_STREAMING_LIMIT) + \
                             result.pts_seconds*1000 + \

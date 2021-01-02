@@ -152,7 +152,10 @@ class ReadGen(threading.Thread):
         self.q = q
         self.last_log_time = time.time()
         self.data_read = 0
-        self.logger = amg_logger.amagi_logger ("com.amagi.stt.readgen", amg_logger.LOG_INFO, log_stream=stt_globals.G_LOGGER_STREAM)
+        self.logger = amg_logger.amagi_logger (
+                        "com.amagi.stt.readgen",
+                        amg_logger.LOG_INFO, 
+                        log_stream=stt_globals.G_LOGGER_STREAM)
 
     def get_sync_byte_position (self, data):
         sync_byte = 'c0ffeeee'
@@ -201,7 +204,11 @@ class GeneratorClass ():
         self.q = q
         self.exit_flag = False
         self.stream = stream
-        self.logger = amg_logger.amagi_logger ("com.amagi.stt.GeneratorClass", amg_logger.LOG_INFO, log_stream=stt_globals.G_LOGGER_STREAM)
+        self.logger = amg_logger.amagi_logger (
+                        "com.amagi.stt.GeneratorClass", 
+                        amg_logger.LOG_INFO, 
+                        log_stream=stt_globals.G_LOGGER_STREAM)
+        self.time0_ms = 0
 
     def parse_audio_packet (self, data):
         if data and data[0:4].hex() != 'c0ffeeee':
@@ -212,6 +219,12 @@ class GeneratorClass ():
         data_len = audio_header_get_data_length (data)
         running_pts = (self.stream.restart_counter * G_STREAMING_LIMIT) + self.stream.consumed_ms
         #print (f"add map[{running_pts}] = {pts}")
+        if (pts > 0):
+            curr_time_ms = stt_globals.now_2_epochms()
+            if (self.time0_ms == 0):
+                self.time0_ms = curr_time_ms
+            rel_time_ms = curr_time_ms - self.time0_ms
+            self.logger.info(f"Received-data: reltime={rel_time_ms}, pts={pts}, len={data_len}")
         
         self.stream.audio_pts_map_lock.acquire ()
         self.stream.audio_pts_map[running_pts] = pts
@@ -238,7 +251,7 @@ class GeneratorClass ():
 
         self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
 
-def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, dump_gcp_response=""):
+def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     global G_EXIT_FLAG
@@ -247,13 +260,9 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, dump_gcp_response=
     q_obj = queue.Queue ()
     audio_q = queue.Queue(maxsize=G_MAX_AUDIO_BUFFER)
 
-    if dump_gcp_response:
-        dump_gcp_response = dump_gcp_response + "." + \
-                datetime.now().strftime("%Y%m%d-%H:%M:%S")
-
     response_to_srt_obj = ResponseToSRT (1, "audio_to_srt_1", q_obj, \
             srt_pipe_srt_fname, G_OFLAGS_APPEND_MODE, G_OFLAGS_APPEND_NULL_CHAR, \
-            dump_gcp_response)
+            verbose_mode)
     response_to_srt_obj.start ()
     
     #phrases = ["BEIN SPORTS", "BEIN SPORTS EXTRA"]
@@ -333,10 +342,6 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, dump_gcp_response=
             eprint ("## Exited writer")
             G_EXIT_FLAG = True
             break
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-    sys.stderr.flush()
 
 def validate_configuration(config):
 
@@ -509,7 +514,7 @@ if __name__ == '__main__':
             main(opt_input_audio,
                  opt_output_srt,
                  config[G_FILES_SECTION_NAME].get(G_PHRASES_PATH_CFG_NAME),
-                 opt_dump_gcp_response)
+                 opt_verbose)
         except KeyboardInterrupt:
             G_EXIT_FLAG = True
             sys.exit(0)

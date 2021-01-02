@@ -365,18 +365,11 @@ case $OPT_OP in
         ((OPT_VERBOSE)) && { DEPACK_VERBOSITY="-vv"; }
         ((OPT_VERBOSE)) && { TRANSCRIBE_VERBOSITY="-v"; }
 
+        ((OPT_VERBOSE_ON_TTY)) && \
+            { echo "starting ffmpeg|pack|depack|streaming_stt ..." > /dev/tty; }
+        sleep 2
+
         (
-            #if ((OPT_VERBOSE_ON_TTY))
-            #then
-            #    echo "starting tail ..." > /dev/tty
-            #    sleep 2
-            #    stdbuf -o 0 tail --pid=$BG_PID -f $OPT_DEBUG_FILEPATH 1>/dev/tty & 
-            #fi
-
-            ((OPT_VERBOSE_ON_TTY)) && \
-                { echo "starting ffmpeg|pack|depack|streaming_stt ..." > /dev/tty; }
-            sleep 2
-
             ffmpeg \
                 -loglevel quiet \
                 -re \
@@ -397,26 +390,22 @@ case $OPT_OP in
                 $TRANSCRIBE_VERBOSITY \
                 -o $OPT_OUTPUT_FILEPATH \
                 -c $OPT_CONFIG_FILEPATH \
-                -a $OPT_AUTH_FILEPATH \
-                -d /dev/stderr #&
+                -a $OPT_AUTH_FILEPATH
 
-            stty sane
+        ) 2>$OPT_DEBUG_FILEPATH &
+        BG_PID=$!
 
-            #((OPT_VERBOSE_ON_TTY)) && \
-            #    { echo "end of input" > /dev/tty; \
-            #      echo "sleeping for 2 seconds ..." > /dev/tty; }
-            #sleep 2     # TODO: make it event based
-#
-#            kill_pid $BG_PID
+        if ((OPT_VERBOSE_ON_TTY))
+        then
+            echo "starting tail ..." > /dev/tty
+            stdbuf -o 0 tail --pid=$BG_PID -f $OPT_DEBUG_FILEPATH 1>/dev/tty & 
+        fi
 
-        ) 2>$OPT_DEBUG_FILEPATH
-
+        stty sane
         ;;
 esac
 
 RET=$?
-
-#stty sane
 
 exit $RET
 
