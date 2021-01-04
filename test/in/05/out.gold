@@ -1,5 +1,7 @@
 + python3 /ssttg/hmzcode/stt_config.py 1
 [FILES]
+input_audio_path = /dev/stdin
+output_srt_path = /dev/stdout
 gcp_auth_path = /mnt/ops/livetranscription/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
 
@@ -18,7 +20,16 @@ last_log_time_quanta_ms = 5
 append_mode = true
 append_null_char = true
 
+[LOGGING]
+verbose = false
+logger_stream = stderr
+
+[OTHERS]
+no_run = false
+
 + python3 /ssttg/hmzcode/stt_config.py 2 /ssttg/test/in/05/test_cfg.ini
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
 val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
@@ -30,7 +41,12 @@ val=default, file=/ssttg/test/in/05/test_cfg.ini, section=IFLAGS, key=exit_on_ze
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=5
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
+val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=LOGGING, key=verbose, value=true
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OTHERS, key=no_run, value=false
 [FILES]
+input_audio_path = /dev/stdin
+output_srt_path = /dev/stdout
 gcp_auth_path = /mnt/ops/livetranscription/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
 
@@ -48,4 +64,11 @@ last_log_time_quanta_ms = 5
 [OFLAGS]
 append_mode = true
 append_null_char = true
+
+[LOGGING]
+verbose = true
+logger_stream = stderr
+
+[OTHERS]
+no_run = false
 

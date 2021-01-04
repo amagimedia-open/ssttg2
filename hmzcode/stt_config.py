@@ -17,6 +17,14 @@ class DefaultSttConfig ():
         self.default_config_str = """
 [FILES]
 
+input_audio_path = /dev/stdin
+
+    # the input wav file path encoded as pcm_s16le at 16000 Hz
+
+output_srt_path = /dev/stdout
+
+    # the output srt file path
+
 gcp_auth_path = /mnt/ops/livetranscription/auth.json
 
     # the auth file path in json format needed by gcp 
@@ -82,6 +90,27 @@ append_null_char=true
 
     # If true, appends the ascii null char ('\0') after each 
     # line of srt output
+
+#-------------------------------------------------------------------
+
+[LOGGING]
+
+verbose=false
+
+    # verboseness needed for debugging. values are true|false.
+
+logger_stream=stderr
+
+    # values are stderr|syslog
+
+#-------------------------------------------------------------------
+
+[OTHERS]
+
+no_run=false
+
+    # does not run the program. useful to check configuration.
+    # values are true|false
 """
 
     def get_config_parser (self):

@@ -46,6 +46,8 @@ set -x
 
 set +x
 
+cat $TMP1 > $DIRNAME/out.txt
+
 if ! diff $TMP1 $DIRNAME/out.gold
 then
     error_message "failed"
