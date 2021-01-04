@@ -20,6 +20,8 @@ class DefaultSttConfig ():
 input_audio_path = /dev/stdin
 
     # the input wav file path encoded as pcm_s16le at 16000 Hz
+    # this by default is stdin. it could also be the path to a
+    # named pipe.
 
 output_srt_path = /dev/stdout
 
@@ -128,7 +130,7 @@ no_run=false
             cp.write(sys.stdout)
 
 
-def gen_with_defaults (filepath, verbose=False):
+def generate_with_defaults (filepath, verbose=False):
     """
     reads the configuration file and supplied default values 
     from DefaultSttConfig
@@ -178,7 +180,7 @@ def utest1():
 
 def utest2():
 
-    cp = gen_with_defaults (sys.argv[2], True)
+    cp = generate_with_defaults (sys.argv[2], True)
     cp.write(sys.stdout)
 
 
