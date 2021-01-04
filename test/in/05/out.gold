@@ -21,8 +21,8 @@ append_null_char = true
 + python3 /ssttg/hmzcode/stt_config.py 2 /ssttg/test/in/05/test_cfg.ini
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
-val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=3.0
-val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=800
+val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
+val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_chars_in_sub_row, value=30
 val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_words_to_search, value=4
@@ -35,8 +35,8 @@ gcp_auth_path = /mnt/ops/livetranscription/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
 
 [TRANSLATION]
-min_word_drain_delay_sec = 3.0
-max_inter_word_duration_ms = 800
+min_word_drain_delay_sec = 4.0
+max_inter_word_duration_ms = 900
 max_subtitle_line_duration_ms = 1500
 max_chars_in_sub_row = 30
 max_words_to_search = 4

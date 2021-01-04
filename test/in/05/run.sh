@@ -55,5 +55,3 @@ fi
 info_message "passed"
 exit 0
 
-
-
