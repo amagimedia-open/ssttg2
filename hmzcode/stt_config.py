@@ -6,6 +6,7 @@
 
 import configparser
 import sys
+import os
 
 class DefaultSttConfig ():
 
@@ -97,8 +98,70 @@ append_null_char=true
             cp = self.get_config_parser ()
             cp.write(sys.stdout)
 
-if __name__ == '__main__':
+
+def gen_with_defaults (filepath, verbose=False):
+    """
+    reads the configuration file and supplied default values 
+    from DefaultSttConfig
+    returns a ConfigParser object
+    """
+
+    default_config = DefaultSttConfig().get_config_parser()
+
+    input_config = configparser.ConfigParser()
+    input_config.read(filepath)
+
+    gen_config = configparser.ConfigParser()
+
+    for section in default_config.sections():
+        for (key, val) in default_config.items(section):
+
+            set_default_value = False
+
+            try:
+                val = input_config.get(section, key)
+                if (verbose):
+                    print(f"val=infile,  file={filepath}, section={section}, key={key}, value={val}")
+
+            except configparser.NoSectionError:
+                set_default_value = True
+
+            except configparser.NoOptionError:
+                set_default_value = True
+
+            if (set_default_value):
+                if (verbose):
+                    print(f"val=default, file={filepath}, section={section}, key={key}, value={val}")
+
+            if (not gen_config.has_section(section)):
+                gen_config.add_section(section)
+
+            gen_config.set(section, key, val)
+
+    return gen_config
+
+
+def utest1():
 
     def_stt_config = DefaultSttConfig ()
     def_stt_config.dump2stdout (False)
+
+
+def utest2():
+
+    cp = gen_with_defaults (sys.argv[2], True)
+    cp.write(sys.stdout)
+
+
+if __name__ == '__main__':
+
+    #https://stackoverflow.com/questions/3061/calling-a-function-of-a-module-by-using-its-name-a-string
+
+    unit_test_fnx_name = "utest" + sys.argv[1] 
+    locals()[unit_test_fnx_name]()
+
+    #unit_test_fnx = getattr(__module__, unit_test_fnx_name)
+    #unit_test_fnx = getattr("stt_config", unit_test_fnx_name)
+    #unit_test_fnx()
+
 

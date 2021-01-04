@@ -1,0 +1,51 @@
++ python3 /ssttg/hmzcode/stt_config.py 1
+[FILES]
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+[TRANSLATION]
+min_word_drain_delay_sec = 3.0
+max_inter_word_duration_ms = 800
+max_subtitle_line_duration_ms = 1500
+max_chars_in_sub_row = 30
+max_words_to_search = 4
+
+[IFLAGS]
+exit_on_zero_size = true
+last_log_time_quanta_ms = 5
+
+[OFLAGS]
+append_mode = true
+append_null_char = true
+
++ python3 /ssttg/hmzcode/stt_config.py 2 /ssttg/test/in/05/test_cfg.ini
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=3.0
+val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=800
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_chars_in_sub_row, value=30
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_words_to_search, value=4
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=IFLAGS, key=exit_on_zero_size, value=true
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=5
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
+val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
+[FILES]
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+[TRANSLATION]
+min_word_drain_delay_sec = 3.0
+max_inter_word_duration_ms = 800
+max_subtitle_line_duration_ms = 1500
+max_chars_in_sub_row = 30
+max_words_to_search = 4
+
+[IFLAGS]
+exit_on_zero_size = true
+last_log_time_quanta_ms = 5
+
+[OFLAGS]
+append_mode = true
+append_null_char = true
+
