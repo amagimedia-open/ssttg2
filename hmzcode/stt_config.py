@@ -9,6 +9,7 @@ import sys
 import os
 
 import stt_default_config
+import stt_globals
 
 class DefaultSttConfig ():
 
@@ -23,12 +24,12 @@ class DefaultSttConfig ():
         default_config.read_string(stt_default_config.stt_default_config_str)
         return default_config
 
-    def dump (self, file_obj=sys.stdout, with_comments=False):
+    def dump (self, with_comments=False):
 
         if (with_comments):
-            print(stt_default_config.stt_default_config_str, file=file_obj)
+            stt_globals.eprint(stt_default_config.stt_default_config_str)
         else:
-            self.get_config_parser().write(file_obj)
+            self.get_config_parser().write(sys.stderr)
 
 
 def generate_with_defaults (filepath, verbose=False):
@@ -53,7 +54,7 @@ def generate_with_defaults (filepath, verbose=False):
             try:
                 val = input_config.get(section, key)
                 if (verbose):
-                    print(f"val=infile,  file={filepath}, section={section}, key={key}, value={val}")
+                    stt_globals.eprint(f"val=infile,  file={filepath}, section={section}, key={key}, value={val}")
 
             except configparser.NoSectionError:
                 set_default_value = True
@@ -63,7 +64,7 @@ def generate_with_defaults (filepath, verbose=False):
 
             if (set_default_value):
                 if (verbose):
-                    print(f"val=default, file={filepath}, section={section}, key={key}, value={val}")
+                    stt_globals.eprint(f"val=default, file={filepath}, section={section}, key={key}, value={val}")
 
             if (not gen_config.has_section(section)):
                 gen_config.add_section(section)
@@ -84,12 +85,12 @@ def utest1():
 def utest2():
 
     def_stt_config = DefaultSttConfig ()
-    def_stt_config.dump (sys.stderr, True)
+    def_stt_config.dump (True)
 
 def utest3():
 
     cp = generate_with_defaults (sys.argv[2], True)
-    cp.write(sys.stdout)
+    cp.write(sys.stderr)
 
 
 if __name__ == '__main__':

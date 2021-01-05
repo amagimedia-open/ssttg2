@@ -1,12 +1,12 @@
 + python3 /ssttg/hmzcode/stt_cmdargs.py 1
+generated default config
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = /dev/stdin
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = /dev/stdout
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /mnt/ops/livetranscription/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
 INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = False
-INFO, com.amagi.stt.cmdargs, generated default config
-INFO, com.amagi.stt.cmdargs, config overwritten with cmdargs
+INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = /dev/stdin
 output_srt_path = /dev/stdout
@@ -37,14 +37,14 @@ no_run = False
 
 
 + python3 /ssttg/hmzcode/stt_cmdargs.py 2
+generated default config
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
 INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = True
-INFO, com.amagi.stt.cmdargs, generated default config
-INFO, com.amagi.stt.cmdargs, config overwritten with cmdargs
+INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = in.pcm
 output_srt_path = out.srt
@@ -75,14 +75,30 @@ no_run = True
 
 
 + python3 /ssttg/hmzcode/stt_cmdargs.py 3 /ssttg/test/in/02/test_cfg.ini
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
+val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_chars_in_sub_row, value=30
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_words_to_search, value=4
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=IFLAGS, key=exit_on_zero_size, value=true
+val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=10
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=verbose, value=false
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, value=false
+generated config from /ssttg/test/in/02/test_cfg.ini with defaults
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
 INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = True
-INFO, com.amagi.stt.cmdargs, generated config from /ssttg/test/in/02/test_cfg.ini with defaults
-INFO, com.amagi.stt.cmdargs, config overwritten with cmdargs
+INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = in.pcm
 output_srt_path = out.srt
@@ -112,6 +128,7 @@ logger_stream = stderr
 no_run = True
 
 
++ python3 /ssttg/hmzcode/stt_cmdargs.py 4 /ssttg/test/in/02/test_cfg.ini
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
@@ -128,3 +145,75 @@ val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_nul
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=verbose, value=false
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, value=false
+generated config from /ssttg/test/in/02/test_cfg.ini with defaults
+INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
+INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
+INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
+INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
+INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
+INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = False
+INFO, com.amagi.stt.cmdargs, final configuration is as follows:
+INFO, com.amagi.stt.cmdargs, [FILES]
+input_audio_path = in.pcm
+output_srt_path = out.srt
+gcp_auth_path = /foo/boo/auth.json
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+[TRANSLATION]
+min_word_drain_delay_sec = 4.0
+max_inter_word_duration_ms = 900
+max_subtitle_line_duration_ms = 1500
+max_chars_in_sub_row = 30
+max_words_to_search = 4
+
+[IFLAGS]
+exit_on_zero_size = true
+last_log_time_quanta_ms = 10
+
+[OFLAGS]
+append_mode = true
+append_null_char = true
+
+[LOGGING]
+verbose = True
+logger_stream = stderr
+
+[OTHERS]
+no_run = False
+
+
+INFO, com.amagi.stt.globals, G_BYTE_PER_SAMPLE = 2
+INFO, com.amagi.stt.globals, G_AUD_SAMPLING_RATE = 16000
+INFO, com.amagi.stt.globals, G_CHUNK_MS = 32
+INFO, com.amagi.stt.globals, G_CHUNK_SIZE_BYTES = 1024
+INFO, com.amagi.stt.globals, G_TIMEOUT_SECONDS = 3
+INFO, com.amagi.stt.globals, G_TIMEOUT_MSECONDS = 3000
+INFO, com.amagi.stt.globals, G_REPEAT_SUB_THREASHOLD_MS = 1000
+INFO, com.amagi.stt.globals, G_WRITE_AFTER_CHARACTERS_RECVD = 150
+INFO, com.amagi.stt.globals, G_MAX_SUB_CHARS = 30
+INFO, com.amagi.stt.globals, G_STREAMING_LIMIT = 240000
+INFO, com.amagi.stt.globals, G_MAX_AUDIO_BUFFER = 31.25
+INFO, com.amagi.stt.globals, G_AUDIO_HEADER_LEN = 14
+INFO, com.amagi.stt.globals, G_MIN_SUB_DURATION_MS = 400
+INFO, com.amagi.stt.globals, G_MAX_SUB_DURATION_MS = 4000
+INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_INDX = 0
+INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_TIME_INDX = 1
+INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_CNSMD_INDX = 2
+INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_MTIME_INDX = 3
+INFO, com.amagi.stt.globals, G_INPUT_AUDIO_PATH = in.pcm
+INFO, com.amagi.stt.globals, G_OUTPUT_SRT_PATH = out.srt
+INFO, com.amagi.stt.globals, G_GCP_AUTH_PATH = /foo/boo/auth.json
+INFO, com.amagi.stt.globals, G_PHRASES_PATH = /mnt/ops/livetranscription/phrases_path
+INFO, com.amagi.stt.globals, G_MIN_WORD_DRAIN_DELAY = 4.0
+INFO, com.amagi.stt.globals, G_MAX_INTER_WORD_DURATION = 900
+INFO, com.amagi.stt.globals, G_MAX_SUBTITLE_LINE_DURATION = 1500
+INFO, com.amagi.stt.globals, G_MAX_CHARS_IN_SUB_ROW = 30
+INFO, com.amagi.stt.globals, G_MAX_WORDS_TO_SEARCH = 4
+INFO, com.amagi.stt.globals, G_IFLAGS_EXIT_ON_ZERO_SIZE = True
+INFO, com.amagi.stt.globals, G_IFLAGS_LAST_LOG_TIME_QUANTA_MS = 10
+INFO, com.amagi.stt.globals, G_OFLAGS_APPEND_MODE = True
+INFO, com.amagi.stt.globals, G_OFLAGS_APPEND_NULL_CHAR = True
+INFO, com.amagi.stt.globals, G_VERBOSE = True
+INFO, com.amagi.stt.globals, G_LOGGER_STREAM = stderr
+INFO, com.amagi.stt.globals, G_NO_RUN = False
+INFO, com.amagi.stt.globals, G_EXIT_FLAG = False

@@ -20,7 +20,7 @@ class amagi_logger:
                  module="com.amagimedia-open.ssttg2", 
                  log_level=LOG_INFO, 
                  facility=LOG_USER, 
-                 log_stream="syslog"):
+                 log_stream="stderr"):
 
         self.__module = module
         self.__log_level = log_level

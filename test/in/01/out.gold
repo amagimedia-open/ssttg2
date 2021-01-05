@@ -128,23 +128,23 @@ no_run=false
     # does not run the program. useful to check configuration.
     # values are true|false
 
-+ python3 /ssttg/hmzcode/stt_config.py 3 /ssttg/test/in/05/test_cfg.ini
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
-val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
-val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_chars_in_sub_row, value=30
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=TRANSLATION, key=max_words_to_search, value=4
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=IFLAGS, key=exit_on_zero_size, value=true
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=5
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
-val=infile,  file=/ssttg/test/in/05/test_cfg.ini, section=LOGGING, key=verbose, value=true
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
-val=default, file=/ssttg/test/in/05/test_cfg.ini, section=OTHERS, key=no_run, value=false
++ python3 /ssttg/hmzcode/stt_config.py 3 /ssttg/test/in/01/test_cfg.ini
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=infile,  file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
+val=infile,  file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_chars_in_sub_row, value=30
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_words_to_search, value=4
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=IFLAGS, key=exit_on_zero_size, value=true
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=5
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
+val=infile,  file=/ssttg/test/in/01/test_cfg.ini, section=LOGGING, key=verbose, value=true
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OTHERS, key=no_run, value=false
 [FILES]
 input_audio_path = /dev/stdin
 output_srt_path = /dev/stdout

@@ -11,6 +11,7 @@ import sys
 
 import amg_logger
 import stt_config
+import stt_globals
 
 def set_default_cmdarg_values (cmdargs_parser):
 
@@ -101,22 +102,8 @@ def gen_config_from_cmdargs (argv):
 
     cmdargs = cmdargs_parser.parse_args (argv)
 
-    #+---------------------------------------------+
-    #| Step 3: Setup logger and dump cmdarg values |
-    #+---------------------------------------------+
-
-    # see stt_globals.py
-    cmdargs_logger = amg_logger.amagi_logger (
-                          "com.amagi.stt.cmdargs", 
-                          amg_logger.LOG_INFO, 
-                          log_stream=cmdargs.logger_stream)
-
-
-    if (cmdargs.verbose):
-        dump_cmdarg_values (cmdargs, cmdargs_logger)
-
     #+-----------------------------------------------+
-    #| Step 4: create the desired configuration with |
+    #| Step 2: create the desired configuration with |
     #|         command line overrides                |
     #+-----------------------------------------------+
 
@@ -124,7 +111,7 @@ def gen_config_from_cmdargs (argv):
 
     if (len(cmdargs.config_path) > 0):
         if (not os.path.isfile (cmdargs.config_path)):
-            cmdargs_logger.error(f"configuration file {cmdargs.config_path} not found")
+            stt_globals.eprint(f"configuration file {cmdargs.config_path} not found")
             raise FileNotFoundError(
                     errno.ENOENT, \
                     os.strerror(errno.ENOENT), \
@@ -135,7 +122,7 @@ def gen_config_from_cmdargs (argv):
         cp = stt_config.generate_with_defaults (cmdargs.config_path, cmdargs.verbose)
 
         if (cmdargs.verbose):
-            cmdargs_logger.info(f"generated config from {cmdargs.config_path} with defaults")
+            stt_globals.eprint(f"generated config from {cmdargs.config_path} with defaults")
 
     else:
 
@@ -143,21 +130,30 @@ def gen_config_from_cmdargs (argv):
         cp = stt_config.DefaultSttConfig().get_config_parser()
 
         if (cmdargs.verbose):
-            cmdargs_logger.info(f"generated default config")
+            stt_globals.eprint(f"generated default config")
 
-    # override the configuration values with those specified
-    # in command line
+    #+----------------------------------------------------------------+
+    #| Step 4: override the configuration values with those specified |
+    #|         in command line and dump final configuration           |
+    #+----------------------------------------------------------------+
+
     set_cmdarg_values_in_config (cp, cmdargs)
 
-    if (cmdargs.verbose):
-        cmdargs_logger.info(f"config overwritten with cmdargs")
+    logger = amg_logger.amagi_logger (
+                "com.amagi.stt.cmdargs", 
+                amg_logger.LOG_INFO, 
+                amg_logger.LOG_USER, 
+                cp.get("LOGGING", "logger_stream"))
 
-    # dump configuration using logger
-    if (cmdargs.verbose):
+    if (cp.getboolean("LOGGING", "verbose")):
+        dump_cmdarg_values (cmdargs, logger)
+
+    if (cp.getboolean("LOGGING", "verbose")):
+        logger.info(f"final configuration is as follows:")
         f_str = io.StringIO()
         cp.write(f_str)
         f_str.seek(0)
-        cmdargs_logger.info(f_str.read())
+        logger.info(f_str.read())
         f_str.close()
 
     return cp
@@ -203,16 +199,32 @@ def utest3():
     """
 
     argv = ["--verbose",
-            "--input_audio_path", "in.pcm",
-            "--output_srt_path",  "out.srt",
+            "-i",                 "in.pcm",
+            "-o",                 "out.srt",
             "--gcp_auth_path",    "/foo/boo/auth.json",
             "--no_run",
             "--config_path",      sys.argv[2]]
 
     cp = gen_config_from_cmdargs (argv)
 
-    # Note that configuration is dumped in gen_config_from_cmdargs 
-    # on stderr (by default) if --verbose is set
+
+def utest4():
+    """
+        Some arguments
+        Specified configuration
+        Set globals using configuration
+    """
+
+    argv = ["--verbose",
+            "--input_audio_path", "in.pcm",
+            "--output_srt_path",  "out.srt",
+            "--gcp_auth_path",    "/foo/boo/auth.json",
+            "--config_path",      sys.argv[2]]
+
+    cp = gen_config_from_cmdargs (argv)
+    stt_globals.config_2_globals(cp)
+    stt_globals.dump_globals()
+
 
 if __name__ == '__main__':
 
