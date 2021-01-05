@@ -72,6 +72,9 @@ def generate_with_defaults (filepath, verbose=False):
 
     return gen_config
 
+#+------------+
+#| UNIT TESTS |
+#+------------+
 
 def utest1():
 
@@ -91,13 +94,6 @@ def utest3():
 
 if __name__ == '__main__':
 
-    #https://stackoverflow.com/questions/3061/calling-a-function-of-a-module-by-using-its-name-a-string
-
     unit_test_fnx_name = "utest" + sys.argv[1] 
     locals()[unit_test_fnx_name]()
-
-    #unit_test_fnx = getattr(__module__, unit_test_fnx_name)
-    #unit_test_fnx = getattr("stt_config", unit_test_fnx_name)
-    #unit_test_fnx()
-
 
