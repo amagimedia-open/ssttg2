@@ -42,13 +42,13 @@ set -x
 
 (
     python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 1 
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 2 
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 3 $DIRNAME/test_cfg.ini
 ) 1>$TMP1 2>&1
 
 set +x
 
 cat $TMP1 > $DIRNAME/out.txt
-
-exit 10
 
 if ! diff $TMP1 $DIRNAME/out.gold
 then

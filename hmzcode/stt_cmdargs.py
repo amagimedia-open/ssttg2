@@ -169,8 +169,8 @@ def gen_config_from_cmdargs (argv):
 
 def utest1():
     """
-        No configuration file
         No arguments except --verbose
+        (default configuration)
     """
 
     argv = ["--verbose"] 
@@ -179,6 +179,40 @@ def utest1():
     # Note that configuration is dumped in gen_config_from_cmdargs 
     # on stderr (by default) if --verbose is set
 
+def utest2():
+    """
+        Some arguments
+        (default configuration)
+    """
+
+    argv = ["--verbose",
+            "--input_audio_path", "in.pcm",
+            "--output_srt_path",  "out.srt",
+            "--gcp_auth_path",    "/foo/boo/auth.json",
+            "--no_run"]
+
+    cp = gen_config_from_cmdargs (argv)
+
+    # Note that configuration is dumped in gen_config_from_cmdargs 
+    # on stderr (by default) if --verbose is set
+
+def utest3():
+    """
+        Some arguments
+        Specified configuration
+    """
+
+    argv = ["--verbose",
+            "--input_audio_path", "in.pcm",
+            "--output_srt_path",  "out.srt",
+            "--gcp_auth_path",    "/foo/boo/auth.json",
+            "--no_run",
+            "--config_path",      sys.argv[2]]
+
+    cp = gen_config_from_cmdargs (argv)
+
+    # Note that configuration is dumped in gen_config_from_cmdargs 
+    # on stderr (by default) if --verbose is set
 
 if __name__ == '__main__':
 

@@ -1,0 +1,130 @@
++ python3 /ssttg/hmzcode/stt_cmdargs.py 1
+INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = /dev/stdin
+INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = /dev/stdout
+INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /mnt/ops/livetranscription/auth.json
+INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
+INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
+INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = False
+INFO, com.amagi.stt.cmdargs, generated default config
+INFO, com.amagi.stt.cmdargs, config overwritten with cmdargs
+INFO, com.amagi.stt.cmdargs, [FILES]
+input_audio_path = /dev/stdin
+output_srt_path = /dev/stdout
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+[TRANSLATION]
+min_word_drain_delay_sec = 3.0
+max_inter_word_duration_ms = 800
+max_subtitle_line_duration_ms = 1500
+max_chars_in_sub_row = 30
+max_words_to_search = 4
+
+[IFLAGS]
+exit_on_zero_size = true
+last_log_time_quanta_ms = 5
+
+[OFLAGS]
+append_mode = true
+append_null_char = true
+
+[LOGGING]
+verbose = True
+logger_stream = stderr
+
+[OTHERS]
+no_run = False
+
+
++ python3 /ssttg/hmzcode/stt_cmdargs.py 2
+INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
+INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
+INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
+INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
+INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
+INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = True
+INFO, com.amagi.stt.cmdargs, generated default config
+INFO, com.amagi.stt.cmdargs, config overwritten with cmdargs
+INFO, com.amagi.stt.cmdargs, [FILES]
+input_audio_path = in.pcm
+output_srt_path = out.srt
+gcp_auth_path = /foo/boo/auth.json
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+[TRANSLATION]
+min_word_drain_delay_sec = 3.0
+max_inter_word_duration_ms = 800
+max_subtitle_line_duration_ms = 1500
+max_chars_in_sub_row = 30
+max_words_to_search = 4
+
+[IFLAGS]
+exit_on_zero_size = true
+last_log_time_quanta_ms = 5
+
+[OFLAGS]
+append_mode = true
+append_null_char = true
+
+[LOGGING]
+verbose = True
+logger_stream = stderr
+
+[OTHERS]
+no_run = True
+
+
++ python3 /ssttg/hmzcode/stt_cmdargs.py 3 /ssttg/test/in/02/test_cfg.ini
+INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
+INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
+INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
+INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
+INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
+INFO, com.amagi.stt.cmdargs, cmdargs: no_run           = True
+INFO, com.amagi.stt.cmdargs, generated config from /ssttg/test/in/02/test_cfg.ini with defaults
+INFO, com.amagi.stt.cmdargs, config overwritten with cmdargs
+INFO, com.amagi.stt.cmdargs, [FILES]
+input_audio_path = in.pcm
+output_srt_path = out.srt
+gcp_auth_path = /foo/boo/auth.json
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+[TRANSLATION]
+min_word_drain_delay_sec = 4.0
+max_inter_word_duration_ms = 900
+max_subtitle_line_duration_ms = 1500
+max_chars_in_sub_row = 30
+max_words_to_search = 4
+
+[IFLAGS]
+exit_on_zero_size = true
+last_log_time_quanta_ms = 10
+
+[OFLAGS]
+append_mode = true
+append_null_char = true
+
+[LOGGING]
+verbose = True
+logger_stream = stderr
+
+[OTHERS]
+no_run = True
+
+
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
+val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_chars_in_sub_row, value=30
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_words_to_search, value=4
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=IFLAGS, key=exit_on_zero_size, value=true
+val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=10
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=verbose, value=false
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, value=false
