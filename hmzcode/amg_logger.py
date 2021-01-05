@@ -2,7 +2,7 @@ import syslog
 import sys
 import datetime
 
-import stt_globals
+import stt_commons
 
 LOG_DEBUG = syslog.LOG_DEBUG 
 LOG_INFO = syslog.LOG_INFO 
@@ -65,7 +65,7 @@ class amagi_logger:
         module_log_message = '%s, %s, %s'%(p_string, self.__module, str(log_message))
 
         if self.__log2stderr:
-            stt_globals.eprint (module_log_message)
+            stt_commons.eprint (module_log_message)
         else:
             syslog.syslog(priority, module_log_message)
 

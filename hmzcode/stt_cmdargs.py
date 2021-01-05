@@ -11,6 +11,7 @@ import sys
 
 import amg_logger
 import stt_config
+import stt_commons
 import stt_globals
 
 def set_default_cmdarg_values (cmdargs_parser):
@@ -111,7 +112,7 @@ def gen_config_from_cmdargs (argv):
 
     if (len(cmdargs.config_path) > 0):
         if (not os.path.isfile (cmdargs.config_path)):
-            stt_globals.eprint(f"configuration file {cmdargs.config_path} not found")
+            stt_commons.eprint(f"configuration file {cmdargs.config_path} not found")
             raise FileNotFoundError(
                     errno.ENOENT, \
                     os.strerror(errno.ENOENT), \
@@ -122,7 +123,7 @@ def gen_config_from_cmdargs (argv):
         cp = stt_config.generate_with_defaults (cmdargs.config_path, cmdargs.verbose)
 
         if (cmdargs.verbose):
-            stt_globals.eprint(f"generated config from {cmdargs.config_path} with defaults")
+            stt_commons.eprint(f"generated config from {cmdargs.config_path} with defaults")
 
     else:
 
@@ -130,7 +131,7 @@ def gen_config_from_cmdargs (argv):
         cp = stt_config.DefaultSttConfig().get_config_parser()
 
         if (cmdargs.verbose):
-            stt_globals.eprint(f"generated default config")
+            stt_commons.eprint(f"generated default config")
 
     #+----------------------------------------------------------------+
     #| Step 4: override the configuration values with those specified |
