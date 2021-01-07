@@ -32,50 +32,15 @@ G_RESP_LIST_WORD_TIME_INDX = 1
 G_RESP_LIST_WORD_CNSMD_INDX = 2
 G_RESP_LIST_WORD_MTIME_INDX = 3
 
-#+----------------------------------+
-#| Variables set from configuration |
-#+----------------------------------+
-
-# [FILES] section in config file
-
-G_INPUT_AUDIO_PATH = ""
-G_OUTPUT_SRT_PATH  = ""
-G_GCP_AUTH_PATH    = ""
-G_PHRASES_PATH     = ""
-
-# [TRANSLATION] section in config file
-
-G_MIN_WORD_DRAIN_DELAY = 3.0 #Drain words that are 3 seconds older.
-G_MAX_INTER_WORD_DURATION = 800 # 800 ms
-G_MAX_SUBTITLE_LINE_DURATION = 1500 # 1500 ms
-G_MAX_CHARS_IN_SUB_ROW = 30 ## CC-608 limit
-G_MAX_WORDS_TO_SEARCH = 4
-
-# [IFLAGS] section in config file
-
-G_IFLAGS_EXIT_ON_ZERO_SIZE = False
-G_IFLAGS_LAST_LOG_TIME_QUANTA_MS = 5
-
-# [OFLAGS] section in config file
-
-G_OFLAGS_APPEND_MODE = False
-G_OFLAGS_APPEND_NULL_CHAR = True
-
-# [LOGGING] section in config file
-
-G_VERBOSE = False
-G_LOGGER_STREAM = "stderr"
-
-# [OTHERS] section in config file
-
-G_NO_RUN = False
-
-#+------------------------+
-#| Other global variables |
-#+------------------------+
+#+--------+
+#| Others |
+#+--------+
 
 G_EXIT_FLAG = False
 main_logger = None
+
+G_SRT_THREAD_ID   = 1
+G_SRT_THREAD_NAME = "audio_to_srt_1"
 
 #+-----------+
 #| FUNCTIONS |
@@ -83,81 +48,59 @@ main_logger = None
 
 def config_2_globals(cp):
 
-    #+--------------------------+
-    #| declare global variables |
-    #+--------------------------+
-
-    # [FILES] section in config file
-
-    global G_INPUT_AUDIO_PATH
-    global G_OUTPUT_SRT_PATH
-    global G_GCP_AUTH_PATH
-    global G_PHRASES_PATH
-
-    # [TRANSLATION] section in config file
-
-    global G_MIN_WORD_DRAIN_DELAY
-    global G_MAX_INTER_WORD_DURATION
-    global G_MAX_SUBTITLE_LINE_DURATION
-    global G_MAX_CHARS_IN_SUB_ROW
-    global G_MAX_WORDS_TO_SEARCH
-
-    # [IFLAGS] section in config file
-
-    global G_IFLAGS_EXIT_ON_ZERO_SIZE
-    global G_IFLAGS_LAST_LOG_TIME_QUANTA_MS
-
-    # [OFLAGS] section in config file
-
-    global G_OFLAGS_APPEND_MODE
-    global G_OFLAGS_APPEND_NULL_CHAR
-
-    # [LOGGING] section in config file
-
-    global G_VERBOSE
-    global G_LOGGER_STREAM
-
-    # [OTHERS] section in config file
-
-    global G_NO_RUN
-
-    #+----------------------+
-    #| set global variables |
-    #+----------------------+
+    #+---------------------------------+
+    #| create and set global variables |
+    #+---------------------------------+
 
     #[FILES] section
 
-    G_INPUT_AUDIO_PATH = cp.get("FILES", "input_audio_path")
-    G_OUTPUT_SRT_PATH  = cp.get("FILES", "output_srt_path")
-    G_GCP_AUTH_PATH    = cp.get("FILES", "gcp_auth_path")
-    G_PHRASES_PATH     = cp.get("FILES", "phrases_path")
+    globals()["G_INPUT_AUDIO_PATH"] = \
+            cp.get("FILES", "input_audio_path")
+    globals()["G_OUTPUT_SRT_PATH"]  = \
+            cp.get("FILES", "output_srt_path")
+    globals()["G_PHRASES_PATH"]     = \
+            cp.get("FILES", "phrases_path")
+    globals()["G_GCP_AUTH_PATH"]    = \
+            cp.get("FILES", "gcp_auth_path")
 
     #[TRANSLATION] section
 
-    G_MIN_WORD_DRAIN_DELAY       = cp.getfloat("TRANSLATION", "min_word_drain_delay_sec")
-    G_MAX_INTER_WORD_DURATION    = cp.getint  ("TRANSLATION", "max_inter_word_duration_ms")
-    G_MAX_SUBTITLE_LINE_DURATION = cp.getint  ("TRANSLATION", "max_subtitle_line_duration_ms")
-    G_MAX_CHARS_IN_SUB_ROW       = cp.getint  ("TRANSLATION", "max_chars_in_sub_row")
-    G_MAX_WORDS_TO_SEARCH        = cp.getint  ("TRANSLATION", "max_words_to_search")
+    globals()["G_MIN_WORD_DRAIN_DELAY"]       = \
+            cp.getfloat("TRANSLATION", "min_word_drain_delay_sec")
+    globals()["G_MAX_INTER_WORD_DURATION"]    = \
+            cp.getint  ("TRANSLATION", "max_inter_word_duration_ms")
+    globals()["G_MAX_SUBTITLE_LINE_DURATION"] = \
+            cp.getint  ("TRANSLATION", "max_subtitle_line_duration_ms")
+    globals()["G_MAX_CHARS_IN_SUB_ROW"]       = \
+            cp.getint  ("TRANSLATION", "max_chars_in_sub_row")
+    globals()["G_MAX_WORDS_TO_SEARCH"]        = \
+            cp.getint  ("TRANSLATION", "max_words_to_search")
 
     #[IFLAGS] section
 
-    G_IFLAGS_EXIT_ON_ZERO_SIZE       = cp.getboolean ("IFLAGS", "exit_on_zero_size")
-    G_IFLAGS_LAST_LOG_TIME_QUANTA_MS = cp.getint     ("IFLAGS", "last_log_time_quanta_ms")
+    globals()["G_IFLAGS_EXIT_ON_ZERO_SIZE"]       = \
+            cp.getboolean ("IFLAGS", "exit_on_zero_size")
+    globals()["G_IFLAGS_LAST_LOG_TIME_QUANTA_MS"] = \
+            cp.getint     ("IFLAGS", "last_log_time_quanta_ms")
 
     #[OFLAGS] section
 
-    G_OFLAGS_APPEND_MODE      = cp.getboolean ("OFLAGS", "append_mode")
-    G_OFLAGS_APPEND_NULL_CHAR = cp.getboolean ("OFLAGS", "append_null_char")
+    globals()["G_OFLAGS_APPEND_MODE"]      = \
+            cp.getboolean ("OFLAGS", "append_mode")
+    globals()["G_OFLAGS_APPEND_NULL_CHAR"] = \
+            cp.getboolean ("OFLAGS", "append_null_char")
 
     #[LOGGING] section
 
-    G_VERBOSE       = cp.getboolean ("LOGGING", "verbose")
-    G_LOGGER_STREAM = cp.get        ("LOGGING", "logger_stream")
+    globals()["G_VERBOSE"]       = \
+            cp.getboolean ("LOGGING", "verbose")
+    globals()["G_LOGGER_STREAM"] = \
+            cp.get        ("LOGGING", "logger_stream")
 
     #[OTHERS] section
 
-    G_NO_RUN = cp.getboolean ("OTHERS", "no_run")
+    globals()["G_NO_RUN"] = \
+            cp.getboolean ("OTHERS", "no_run")
 
 
 def dump_globals():

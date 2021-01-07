@@ -21,41 +21,16 @@ from google.cloud import speech
 #from google.cloud.speech import enums
 #from google.cloud.speech import types
 
-from response_to_srt import ResponseToSRT
-from stt_data_structure import StreamDataStructure
-from stt_globals import *
-from stt_google_response_interface import *
-import stt_globals
-import amg_logger
+import stt_commons as comn
+import amg_logger  as logr
+import stt_globals as glbl
+import stt_cmdargs as args
+import stt_default_config
+from   response_to_srt    import ResponseToSRT
+from   stt_data_structure import StreamDataStructure
+from   stt_google_response_interface import *
 
-#+-----------------------------+
-#| INI FILE SECTIONS AND NAMES |
-#+-----------------------------+
-
-#names under the section FILES in the .ini file
-
-G_FILES_SECTION_NAME="FILES"
-G_GCP_AUTH_PATH_CFG_NAME="gcp_auth_path"
-G_PHRASES_PATH_CFG_NAME="phrases_path"
-G_ENABLE_DEBUG_RESPONSE_DUMP="enable_debug_gcp_response"
-G_DEBUG_RESPONSE_DUMP_PATH="debug_gcp_response_path"
-
-#names under the section TRANSLATION in the .ini file
-
-G_TRANSLATION_SECTION_NAME="TRANSLATION"
-G_MIN_WORD_DRAIN_DELAY_NAME = "min_word_drain_delay_sec"
-G_MAX_INTER_WORD_DURATION_NAME = "max_inter_word_duration_ms"
-G_MAX_SUBTITLE_LINE_DURATION_NAME = "max_subtitle_line_duration_ms"
-G_MAX_CHARS_IN_SUB_ROW_NAME = "max_chars_in_sub_row"
-G_MAX_WORDS_TO_SEARCH_NAME="max_words_to_search"
-
-G_IFLAGS_SECTION_NAME = "IFLAGS"
-G_IFLAGS_EXIT_ON_ZERO_SIZE_NAME = "exit_on_zero_size"
-G_IFLAGS_LAST_LOG_TIME_QUANTA_MS_NAME = "last_log_time_quanta_ms"
-
-G_OFLAGS_SECTION_NAME = "OFLAGS"
-G_OFLAGS_APPEND_MODE_NAME = "append_mode"
-G_OFLAGS_APPEND_NULL_CHAR_NAME = "append_null_char"
+#from stt_globals import *
 
 #+-----------+
 #| FUNCTIONS |
@@ -155,10 +130,10 @@ class ReadGen(threading.Thread):
         self.q = q
         self.last_log_time = time.time()
         self.data_read = 0
-        self.logger = amg_logger.amagi_logger (
+        self.logger = logr.amagi_logger (
                         "com.amagi.stt.readgen",
-                        amg_logger.LOG_INFO, 
-                        log_stream=stt_globals.G_LOGGER_STREAM)
+                        logr.LOG_INFO, 
+                        log_stream=G_LOGGER_STREAM)
 
     def get_sync_byte_position (self, data):
         sync_byte = 'c0ffeeee'
@@ -198,7 +173,7 @@ class ReadGen(threading.Thread):
             #    print ('Got syncbyte')
             if (audio_header_get_data_length (data)) == 0:
                 main_logger.warn ("Received audio packet with length=0, Exiting...")
-                stt_globals.G_EXIT_FLAG = True
+                glbl.G_EXIT_FLAG = True
                 break
             self.q.put (data)
 
@@ -207,10 +182,10 @@ class GeneratorClass ():
         self.q = q
         self.exit_flag = False
         self.stream = stream
-        self.logger = amg_logger.amagi_logger (
+        self.logger = logr.amagi_logger (
                         "com.amagi.stt.GeneratorClass", 
-                        amg_logger.LOG_INFO, 
-                        log_stream=stt_globals.G_LOGGER_STREAM)
+                        logr.LOG_INFO, 
+                        log_stream=glbl.G_LOGGER_STREAM)
         self.time0_ms = 0
 
     def parse_audio_packet (self, data):
@@ -223,7 +198,7 @@ class GeneratorClass ():
         running_pts = (self.stream.restart_counter * G_STREAMING_LIMIT) + self.stream.consumed_ms
         #print (f"add map[{running_pts}] = {pts}")
         if (pts > 0):
-            curr_time_ms = stt_globals.now_2_epochms()
+            curr_time_ms = comn.now_2_epochms()
             if (self.time0_ms == 0):
                 self.time0_ms = curr_time_ms
             rel_time_ms = curr_time_ms - self.time0_ms
@@ -256,7 +231,7 @@ class GeneratorClass ():
 
         self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
 
-def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
+def main():
 
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
@@ -268,22 +243,22 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
     q_obj = queue.Queue ()
     audio_q = queue.Queue(maxsize=G_MAX_AUDIO_BUFFER)
 
-    response_to_srt_obj = ResponseToSRT (1, "audio_to_srt_1", q_obj, \
-            srt_pipe_srt_fname, G_OFLAGS_APPEND_MODE, G_OFLAGS_APPEND_NULL_CHAR, \
-            verbose_mode)
+    response_to_srt_obj = ResponseToSRT (q_obj)
     response_to_srt_obj.start ()
     
-    #phrases = ["BEIN SPORTS", "BEIN SPORTS EXTRA"]
     phrases = []
-    try:
-        with open (phrases_fname, "r", encoding='utf-8') as fp:
-            for line in fp:
-                if line:
-                    phrases.append (line.strip().encode ('ascii', 'ignore').decode('ascii'))
-    except FileNotFoundError:
-        main_logger.info(f"Phrases file {phrases_fname} is not present.")
-    except:
-        main_logger.error(traceback.format_exc())
+    if (len(glbl.G_PHRASES_PATH) != 0):
+        try:
+            with open (glbl.G_PHRASES_PATH, "r", encoding='utf-8') as fp:
+                for line in fp:
+                    if line:
+                        phrases.append (line.strip().encode ('ascii', 'ignore').decode('ascii'))
+        except FileNotFoundError:
+            main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is not present.")
+        except:
+            main_logger.error(traceback.format_exc())
+    else:
+        main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is null.")
  
     speech_context = speech.SpeechContext(phrases=phrases[:5000])
     try:
@@ -312,8 +287,10 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
     stream_obj = StreamDataStructure ()
     main_logger.info(f"Number of phrases as context = {len(phrases)}")
 
-    reader = ReadGen (audio_pipe_fname, G_CHUNK_SIZE_BYTES, audio_q, \
-            exit_on_zero_size=G_IFLAGS_EXIT_ON_ZERO_SIZE)
+    reader = ReadGen (glbl.G_INPUT_AUDIO_PATH, 
+                      glbl.G_CHUNK_SIZE_BYTES, 
+                      audio_q, \
+                      exit_on_zero_size=glbl.G_IFLAGS_EXIT_ON_ZERO_SIZE)
     reader.start ()
 
     while not G_EXIT_FLAG:
@@ -349,105 +326,6 @@ def main(audio_pipe_fname, srt_pipe_srt_fname, phrases_fname, verbose_mode):
             G_EXIT_FLAG = True
             break
 
-def validate_configuration(config):
-
-    global main_logger
-
-    if (not G_FILES_SECTION_NAME in config):
-        main_logger.error(G_FILES_SECTION_NAME + " section not present in configuration file")
-        sys.exit(1)
-
-    if (not G_PHRASES_PATH_CFG_NAME in config[G_FILES_SECTION_NAME]):
-        main_logger.error(G_PHRASES_PATH_CFG_NAME + " not present in configuration")
-        sys.exit(1)
-
-def dump_configuration(config):
-
-    global main_logger
-
-    #https://stackoverflow.com/questions/23662280/how-to-log-the-contents-of-a-configparser
-    #TODO: main_logger.info
-    eprint({section: dict(config[section]) for section in config.sections()})
-
-def apply_configuration(config):
-
-    global G_MIN_WORD_DRAIN_DELAY
-    global G_MAX_INTER_WORD_DURATION
-    global G_MAX_SUBTITLE_LINE_DURATION
-    global G_MAX_CHARS_IN_SUB_ROW
-    global G_MAX_WORDS_TO_SEARCH
-    global G_STREAMING_LIMIT
-    global G_IFLAGS_EXIT_ON_ZERO_SIZE
-    global G_IFLAGS_LAST_LOG_TIME_QUANTA_MS
-    global G_OFLAGS_APPEND_MODE
-    global G_OFLAGS_APPEND_NULL_CHAR
-
-    if (not G_GCP_AUTH_PATH_CFG_NAME in config[G_FILES_SECTION_NAME]):
-        config.set(G_FILES_SECTION_NAME, G_GCP_AUTH_PATH_CFG_NAME, "")
-
-    if (not G_PHRASES_PATH_CFG_NAME in config[G_FILES_SECTION_NAME]):
-        config.set(G_FILES_SECTION_NAME, G_PHRASES_PATH_CFG_NAME, "")
-
-    if (not G_ENABLE_DEBUG_RESPONSE_DUMP in config[G_FILES_SECTION_NAME]):
-        config.set(G_FILES_SECTION_NAME, G_ENABLE_DEBUG_RESPONSE_DUMP, "")
-
-    if (not G_DEBUG_RESPONSE_DUMP_PATH in config[G_FILES_SECTION_NAME]):
-        config.set(G_FILES_SECTION_NAME, G_DEBUG_RESPONSE_DUMP_PATH, "")
-
-    if (G_TRANSLATION_SECTION_NAME in config):
-
-        if (G_MIN_WORD_DRAIN_DELAY_NAME in config[G_TRANSLATION_SECTION_NAME]):
-            stt_globals.G_MIN_WORD_DRAIN_DELAY = config[G_TRANSLATION_SECTION_NAME].getfloat(G_MIN_WORD_DRAIN_DELAY_NAME)
-
-        if (G_MAX_INTER_WORD_DURATION_NAME in config[G_TRANSLATION_SECTION_NAME]):
-            stt_globals.G_MAX_INTER_WORD_DURATION = config[G_TRANSLATION_SECTION_NAME].getint(G_MAX_INTER_WORD_DURATION_NAME)
-
-        if (G_MAX_SUBTITLE_LINE_DURATION_NAME in config[G_TRANSLATION_SECTION_NAME]):
-            stt_globals.G_MAX_SUBTITLE_LINE_DURATION = config[G_TRANSLATION_SECTION_NAME].getint(G_MAX_SUBTITLE_LINE_DURATION_NAME)
-
-        if (G_MAX_CHARS_IN_SUB_ROW_NAME in config[G_TRANSLATION_SECTION_NAME]):
-            stt_globals.G_MAX_CHARS_IN_SUB_ROW = config[G_TRANSLATION_SECTION_NAME].getint(G_MAX_CHARS_IN_SUB_ROW_NAME)
-
-        if (G_MAX_WORDS_TO_SEARCH_NAME in config[G_TRANSLATION_SECTION_NAME]):
-            stt_globals.G_MAX_WORDS_TO_SEARCH = config[G_TRANSLATION_SECTION_NAME].getint(G_MAX_WORDS_TO_SEARCH_NAME)
-
-    if (G_IFLAGS_SECTION_NAME in config):
-
-        if (G_IFLAGS_EXIT_ON_ZERO_SIZE_NAME in config[G_IFLAGS_SECTION_NAME]):
-            G_IFLAGS_EXIT_ON_ZERO_SIZE = config[G_IFLAGS_SECTION_NAME].getboolean(G_IFLAGS_EXIT_ON_ZERO_SIZE_NAME)
-
-        if (G_IFLAGS_LAST_LOG_TIME_QUANTA_MS_NAME in config[G_IFLAGS_SECTION_NAME]):
-            G_IFLAGS_LAST_LOG_TIME_QUANTA_MS = config[G_IFLAGS_SECTION_NAME].getint(G_IFLAGS_LAST_LOG_TIME_QUANTA_MS_NAME)
-
-    if (G_OFLAGS_SECTION_NAME in config):
-
-        if (G_OFLAGS_APPEND_MODE_NAME in config[G_OFLAGS_SECTION_NAME]):
-            G_OFLAGS_APPEND_MODE = config[G_OFLAGS_SECTION_NAME].getboolean(G_OFLAGS_APPEND_MODE_NAME)
-        if (G_OFLAGS_APPEND_NULL_CHAR_NAME in config[G_OFLAGS_SECTION_NAME]):
-            G_OFLAGS_APPEND_NULL_CHAR = config[G_OFLAGS_SECTION_NAME].getboolean(G_OFLAGS_APPEND_NULL_CHAR_NAME)
-
-def dump_parameters():
-
-    global main_logger
-
-    main_logger.info("#--- Fixed Audio recording parameters ---")
-    main_logger.info(f"G_BYTE_PER_SAMPLE = {G_BYTE_PER_SAMPLE}")
-    main_logger.info(f"G_AUD_SAMPLING_RATE = {G_AUD_SAMPLING_RATE}")
-    main_logger.info(f"G_CHUNK_MS = {G_CHUNK_MS}")
-    main_logger.info(f"G_CHUNK_SIZE_BYTES = {G_CHUNK_SIZE_BYTES}")
-
-    main_logger.info("#--- Fixed Input packet parameters ---")
-    main_logger.info(f"G_AUDIO_HEADER_LEN = {G_AUDIO_HEADER_LEN}")
-
-    main_logger.info("#--- Translation process parameters ---")
-    main_logger.info(f"G_MIN_WORD_DRAIN_DELAY = {stt_globals.G_MIN_WORD_DRAIN_DELAY}")
-    main_logger.info(f"G_MAX_INTER_WORD_DURATION = {stt_globals.G_MAX_INTER_WORD_DURATION}")
-    main_logger.info(f"G_MAX_SUBTITLE_LINE_DURATION = {stt_globals.G_MAX_SUBTITLE_LINE_DURATION}")
-    main_logger.info(f"G_MAX_CHARS_IN_SUB_ROW = {stt_globals.G_MAX_CHARS_IN_SUB_ROW}")
-    main_logger.info(f"G_MAX_WORDS_TO_SEARCH = {stt_globals.G_MAX_WORDS_TO_SEARCH}")
-    main_logger.info(f"G_STREAMING_LIMIT = {G_STREAMING_LIMIT}")
-    main_logger.info(f"G_MAX_AUDIO_BUFFER = {G_MAX_AUDIO_BUFFER}")
-
 def usage():
     global main_logger
 
@@ -458,87 +336,30 @@ if __name__ == '__main__':
     global G_EXIT_FLAG
     global main_logger
 
-    opt_cfg_path = ""
-    opt_verbose = False
-    opt_no_run = False
-    opt_input_audio = ""
-    opt_output_srt  = ""
-    opt_dump_gcp_response  = ""
+    (dump_def_config, cp) = args.gen_config_from_cmdargs (sys.argv[1:])
+    if (dump_def_config):
+        comn.eprint(stt_default_config.stt_default_config_str)
+        os._exit(0)
 
-    parser = argparse.ArgumentParser()
+    glbl.config_2_globals(cp)
 
-    parser.add_argument('-i', '--input_audio', default="/dev/stdin",
-            help="path to input audio fifo")
+    if (glbl.G_VERBOSE):
+        glbl.dump_globals()
 
-    parser.add_argument('-o', '--output_srt', default="/dev/stdout",
-            help="path to output srt fifo")
-
-    parser.add_argument('-c', '--conf', default="stt_cfg.ini",
-            help="path to stt_cfg.ini", required=True)
-    
-    parser.add_argument('-a', '--gcp_auth_path', default="",
-            help="path to GCP auth file")
-
-    parser.add_argument('-d', '--dump_gcp_response', default="",
-            help="Dump Google STT respnse to this file.")
-
-    parser.add_argument('-L', '--logger_stream', default="stderr",
-            help="Set logger to log to syslog or stderr(default)")
-
-    parser.add_argument('-v', '--verbose', action="store_true",
-            default=False, help="Verbose")
-
-    parser.add_argument('-n', '--norun', action="store_true",
-            default=False, help="Dry Run")
-
-    args = parser.parse_args ()
-
-    opt_cfg_path    = args.conf
-    opt_verbose     = args.verbose
-    opt_no_run      = args.norun
-    opt_input_audio = args.input_audio
-    opt_output_srt  = args.output_srt
-    opt_gcp_auth_path = args.gcp_auth_path
-    opt_dump_gcp_response = args.dump_gcp_response
-    stt_globals.G_LOGGER_STREAM = args.logger_stream
-
-    # see stt_globals.py
-    main_logger = amg_logger.amagi_logger (
-                  "com.amagi.stt.main", 
-                  amg_logger.LOG_INFO, 
-                  log_stream=stt_globals.G_LOGGER_STREAM)
-    
-    if (not os.path.isfile (opt_cfg_path)):
-        main_logger.error(f"configuration file {opt_cfg_path} not found")
-        sys.exit(1)
-
-    config = configparser.ConfigParser()
-    config.read(opt_cfg_path)
-    if (opt_verbose):
-        dump_configuration(config)
-    validate_configuration(config)
-    apply_configuration(config)
-    if (opt_verbose):
-        dump_parameters()
-
-    if (opt_no_run):
+    if (glbl.G_NO_RUN):
         sys.exit(0)
 
-    if opt_gcp_auth_path:
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = opt_gcp_auth_path
-    else:
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = config[G_FILES_SECTION_NAME].get(G_GCP_AUTH_PATH_CFG_NAME)
+    # see stt_globals.py
+    main_logger = logr.amagi_logger (
+                  "com.amagi.stt.main", 
+                  logr.LOG_INFO, 
+                  log_stream=glbl.G_LOGGER_STREAM)
 
-    if not opt_dump_gcp_response:
-        if config[G_FILES_SECTION_NAME].get(G_ENABLE_DEBUG_RESPONSE_DUMP).lower() == 'true':
-            opt_dump_gcp_response = config[G_FILES_SECTION_NAME].get(G_DEBUG_RESPONSE_DUMP_PATH)
-
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = glbl.G_GCP_AUTH_PATH
+    
     while not G_EXIT_FLAG:
         try:
-            main(opt_input_audio,
-                 opt_output_srt,
-                 config[G_FILES_SECTION_NAME].get(G_PHRASES_PATH_CFG_NAME),
-                 opt_verbose)
+            main()
             main_logger.info("main() over")
         except KeyboardInterrupt:
             G_EXIT_FLAG = True

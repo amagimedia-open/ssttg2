@@ -20,6 +20,7 @@ docker run \
         --name ssttg2_dev_c \
         -v $DIRNAME:/ssttg \
         -e SSTTG_DEV_ROOT=/ssttg \
+        -e PYTHONPATH=/ssttg/hmzcode \
         -e TEST_SOURCE_FILE_PATH=/ssttg/sstt_testclip_20_sec.mp4 \
         -w /ssttg \
         ssttg2_dev \

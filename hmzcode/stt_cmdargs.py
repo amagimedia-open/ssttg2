@@ -13,10 +13,28 @@ import amg_logger
 import stt_config
 import stt_commons
 import stt_globals
+import stt_default_config
 
 def set_default_cmdarg_values (cmdargs_parser):
 
     default_config = stt_config.DefaultSttConfig().get_config_parser()
+
+    # -c, -C is not part of the configuration
+
+    cmdargs_parser.add_argument(
+            '-C', 
+            '--dump_def_config', 
+            action="store_true",
+            default=False,
+            help="dump the default configuration file to stderr and exit")
+
+    cmdargs_parser.add_argument(
+            '-c', 
+            '--config_path', 
+            default="",
+            help="specifies the path to the configuration file to be used")
+
+    # config file overrideables
 
     cmdargs_parser.add_argument(
             '-i', 
@@ -29,6 +47,12 @@ def set_default_cmdarg_values (cmdargs_parser):
             '--output_srt_path', 
             default=default_config.get("FILES", "output_srt_path"),
             help="overrides ini->[FILES]/output_srt_path")
+
+    cmdargs_parser.add_argument(
+            '-p', 
+            '--phrases_path', 
+            default=default_config.get("FILES", "phrases_path"),
+            help="overrides ini->[FILES]/phrases_path")
 
     cmdargs_parser.add_argument(
             '-a', 
@@ -44,7 +68,8 @@ def set_default_cmdarg_values (cmdargs_parser):
 
     cmdargs_parser.add_argument(
             '-v', 
-            '--verbose', action="store_true",
+            '--verbose', 
+            action="store_true",
             default=default_config.getboolean("LOGGING", "verbose"),
             help="overrides ini->[LOGGING]/verbose")
 
@@ -55,6 +80,7 @@ def set_default_cmdarg_values (cmdargs_parser):
             default=default_config.getboolean("OTHERS", "no_run"),
             help="overrides ini->[OTHERS]/no_run")
 
+
     return cmdargs_parser
 
 
@@ -62,6 +88,7 @@ def dump_cmdarg_values (cmdargs, logger):
 
     logger.info(f"cmdargs: input_audio_path = {cmdargs.input_audio_path}")
     logger.info(f"cmdargs: output_srt_path  = {cmdargs.output_srt_path}")
+    logger.info(f"cmdargs: phrases_path     = {cmdargs.phrases_path}")
     logger.info(f"cmdargs: gcp_auth_path    = {cmdargs.gcp_auth_path}")
     logger.info(f"cmdargs: logger_stream    = {cmdargs.logger_stream}")
     logger.info(f"cmdargs: verbose          = {cmdargs.verbose}")
@@ -72,6 +99,7 @@ def set_cmdarg_values_in_config (config_parser, cmdargs):
 
     config_parser.set("FILES",   "input_audio_path", cmdargs.input_audio_path)
     config_parser.set("FILES",   "output_srt_path",  cmdargs.output_srt_path)
+    config_parser.set("FILES",   "phrases_path",     cmdargs.phrases_path)
     config_parser.set("FILES",   "gcp_auth_path",    cmdargs.gcp_auth_path)
     config_parser.set("LOGGING", "logger_stream",    cmdargs.logger_stream)
     config_parser.set("LOGGING", "verbose",          str(cmdargs.verbose))
@@ -80,8 +108,21 @@ def set_cmdarg_values_in_config (config_parser, cmdargs):
 
 def gen_config_from_cmdargs (argv):
     """
-        returns a ConfigParser object and contains the configuration
-        (default/specified) overriden with command line arguments
+        returns either (dump_def_config=True,  ConfigParser=None)
+                or     (dump_def_config=False, ConfigParser=...)
+
+        the ConfigParser object contains 
+            * the default configuration
+            * overridden by the optional specified configuration and 
+            * finally overridden by the optional command line arguments
+
+        the expected behaviour of the caller should be as follows:
+
+        if (dump_def_config == true):
+            # dump default config on stderr
+            # exit
+
+        use the ConfigParser object to run the program
     """
 
     cmdargs_parser = argparse.ArgumentParser ()
@@ -94,14 +135,14 @@ def gen_config_from_cmdargs (argv):
     # use default configuration parser to set default cmdarg values
     set_default_cmdarg_values (cmdargs_parser)
 
-    # -c is not part of the configuration
-    cmdargs_parser.add_argument('-c', '--config_path', default="")
-
     #+--------------------------------------+
     #| Step 2: parse command line arguments |
     #+--------------------------------------+
 
     cmdargs = cmdargs_parser.parse_args (argv)
+
+    if (cmdargs.dump_def_config):
+        return (True, None)
 
     #+-----------------------------------------------+
     #| Step 2: create the desired configuration with |
@@ -123,7 +164,7 @@ def gen_config_from_cmdargs (argv):
         cp = stt_config.generate_with_defaults (cmdargs.config_path, cmdargs.verbose)
 
         if (cmdargs.verbose):
-            stt_commons.eprint(f"generated config from {cmdargs.config_path} with defaults")
+            stt_commons.eprint(f"using config from {cmdargs.config_path} with defaults")
 
     else:
 
@@ -131,7 +172,7 @@ def gen_config_from_cmdargs (argv):
         cp = stt_config.DefaultSttConfig().get_config_parser()
 
         if (cmdargs.verbose):
-            stt_commons.eprint(f"generated default config")
+            stt_commons.eprint(f"using default config")
 
     #+----------------------------------------------------------------+
     #| Step 4: override the configuration values with those specified |
@@ -157,7 +198,7 @@ def gen_config_from_cmdargs (argv):
         logger.info(f_str.read())
         f_str.close()
 
-    return cp
+    return (False, cp)
 
 
 #+------------+
@@ -171,7 +212,7 @@ def utest1():
     """
 
     argv = ["--verbose"] 
-    cp = gen_config_from_cmdargs (argv)
+    (dump_def_config, cp) = gen_config_from_cmdargs (argv)
 
     # Note that configuration is dumped in gen_config_from_cmdargs 
     # on stderr (by default) if --verbose is set
@@ -188,7 +229,7 @@ def utest2():
             "--gcp_auth_path",    "/foo/boo/auth.json",
             "--no_run"]
 
-    cp = gen_config_from_cmdargs (argv)
+    (dump_def_config, cp) = gen_config_from_cmdargs (argv)
 
     # Note that configuration is dumped in gen_config_from_cmdargs 
     # on stderr (by default) if --verbose is set
@@ -206,7 +247,7 @@ def utest3():
             "--no_run",
             "--config_path",      sys.argv[2]]
 
-    cp = gen_config_from_cmdargs (argv)
+    (dump_def_config, cp) = gen_config_from_cmdargs (argv)
 
 
 def utest4():
@@ -222,10 +263,31 @@ def utest4():
             "--gcp_auth_path",    "/foo/boo/auth.json",
             "--config_path",      sys.argv[2]]
 
-    cp = gen_config_from_cmdargs (argv)
+    (dump_def_config, cp) = gen_config_from_cmdargs (argv)
     stt_globals.config_2_globals(cp)
     stt_globals.dump_globals()
 
+def utest5():
+    """
+        invocation of the implicit help option/argument
+    """
+
+    argv = ["--help"]
+
+    (dump_def_config, cp) = gen_config_from_cmdargs (argv)
+
+def utest6():
+    """
+        dump default configuration 
+    """
+
+    argv = ["-C",
+            "-i", "in.pcm",
+            "-o", "out.srt"]
+
+    (dump_def_config, cp) = gen_config_from_cmdargs (argv)
+    if (dump_def_config):
+        print(stt_default_config.stt_default_config_str, file=sys.stderr)
 
 if __name__ == '__main__':
 

@@ -2,6 +2,7 @@
 generated default config
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = /dev/stdin
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = /dev/stdout
+INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /mnt/ops/livetranscription/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
@@ -10,8 +11,8 @@ INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = /dev/stdin
 output_srt_path = /dev/stdout
-gcp_auth_path = /mnt/ops/livetranscription/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
 
 [TRANSLATION]
 min_word_drain_delay_sec = 3.0
@@ -40,6 +41,7 @@ no_run = False
 generated default config
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
+INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
@@ -48,8 +50,8 @@ INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = in.pcm
 output_srt_path = out.srt
-gcp_auth_path = /foo/boo/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
+gcp_auth_path = /foo/boo/auth.json
 
 [TRANSLATION]
 min_word_drain_delay_sec = 3.0
@@ -77,8 +79,8 @@ no_run = True
 + python3 /ssttg/hmzcode/stt_cmdargs.py 3 /ssttg/test/in/02/test_cfg.ini
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
-val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
 val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
@@ -94,6 +96,7 @@ val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, va
 generated config from /ssttg/test/in/02/test_cfg.ini with defaults
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
+INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
@@ -102,8 +105,8 @@ INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = in.pcm
 output_srt_path = out.srt
-gcp_auth_path = /foo/boo/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
+gcp_auth_path = /foo/boo/auth.json
 
 [TRANSLATION]
 min_word_drain_delay_sec = 4.0
@@ -131,8 +134,8 @@ no_run = True
 + python3 /ssttg/hmzcode/stt_cmdargs.py 4 /ssttg/test/in/02/test_cfg.ini
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
-val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=default, file=/ssttg/test/in/02/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
 val=infile,  file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
@@ -148,6 +151,7 @@ val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, va
 generated config from /ssttg/test/in/02/test_cfg.ini with defaults
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
+INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
 INFO, com.amagi.stt.cmdargs, cmdargs: gcp_auth_path    = /foo/boo/auth.json
 INFO, com.amagi.stt.cmdargs, cmdargs: logger_stream    = stderr
 INFO, com.amagi.stt.cmdargs, cmdargs: verbose          = True
@@ -156,8 +160,8 @@ INFO, com.amagi.stt.cmdargs, final configuration is as follows:
 INFO, com.amagi.stt.cmdargs, [FILES]
 input_audio_path = in.pcm
 output_srt_path = out.srt
-gcp_auth_path = /foo/boo/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
+gcp_auth_path = /foo/boo/auth.json
 
 [TRANSLATION]
 min_word_drain_delay_sec = 4.0
@@ -200,10 +204,13 @@ INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_INDX = 0
 INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_TIME_INDX = 1
 INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_CNSMD_INDX = 2
 INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_MTIME_INDX = 3
+INFO, com.amagi.stt.globals, G_EXIT_FLAG = False
+INFO, com.amagi.stt.globals, G_SRT_THREAD_ID = 1
+INFO, com.amagi.stt.globals, G_SRT_THREAD_NAME = audio_to_srt_1
 INFO, com.amagi.stt.globals, G_INPUT_AUDIO_PATH = in.pcm
 INFO, com.amagi.stt.globals, G_OUTPUT_SRT_PATH = out.srt
-INFO, com.amagi.stt.globals, G_GCP_AUTH_PATH = /foo/boo/auth.json
 INFO, com.amagi.stt.globals, G_PHRASES_PATH = /mnt/ops/livetranscription/phrases_path
+INFO, com.amagi.stt.globals, G_GCP_AUTH_PATH = /foo/boo/auth.json
 INFO, com.amagi.stt.globals, G_MIN_WORD_DRAIN_DELAY = 4.0
 INFO, com.amagi.stt.globals, G_MAX_INTER_WORD_DURATION = 900
 INFO, com.amagi.stt.globals, G_MAX_SUBTITLE_LINE_DURATION = 1500
@@ -216,4 +223,164 @@ INFO, com.amagi.stt.globals, G_OFLAGS_APPEND_NULL_CHAR = True
 INFO, com.amagi.stt.globals, G_VERBOSE = True
 INFO, com.amagi.stt.globals, G_LOGGER_STREAM = stderr
 INFO, com.amagi.stt.globals, G_NO_RUN = False
-INFO, com.amagi.stt.globals, G_EXIT_FLAG = False
++ python3 /ssttg/hmzcode/stt_cmdargs.py 5
+usage: stt_cmdargs.py [-h] [-c CONFIG_PATH] [-C] [-i INPUT_AUDIO_PATH]
+                      [-o OUTPUT_SRT_PATH] [-p PHRASES_PATH]
+                      [-a GCP_AUTH_PATH] [-L LOGGER_STREAM] [-v] [-n]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c CONFIG_PATH, --config_path CONFIG_PATH
+                        specifies the path to the configuration file to be
+                        used
+  -C, --dump_def_config
+                        dump the default configuration file to stderr and exit
+  -i INPUT_AUDIO_PATH, --input_audio_path INPUT_AUDIO_PATH
+                        overrides ini->[FILES]/input_audio_path
+  -o OUTPUT_SRT_PATH, --output_srt_path OUTPUT_SRT_PATH
+                        overrides ini->[FILES]/output_srt_path
+  -p PHRASES_PATH, --phrases_path PHRASES_PATH
+                        overrides ini->[FILES]/phrases_path
+  -a GCP_AUTH_PATH, --gcp_auth_path GCP_AUTH_PATH
+                        overrides ini->[FILES]/gcp_auth_path
+  -L LOGGER_STREAM, --logger_stream LOGGER_STREAM
+                        overrides ini->[LOGGING]/logger_stream
+  -v, --verbose         overrides ini->[LOGGING]/verbose
+  -n, --no_run          overrides ini->[OTHERS]/no_run
++ python3 /ssttg/hmzcode/stt_cmdargs.py 6
+
+
+#
+#  Thu Jan  7 13:31:48 IST 2021
+#
+#  +--------------------------+
+#  | streaming speech to text |
+#  |     configuration        |
+#  +--------------------------+
+#
+#  +-----------------------------------+   --+
+#  |default configuration              |     |
+#  |(base)                             |     |
+#  |  +----------------------------+   |     |
+#  |  | specific configuration     |   |     |
+#  |  | (override 1)               |   |     |final
+#  |  | (-c)                       |   |     |configuration
+#  |  | (optional)                 |   |     |
+#  |  |   +----------------------+ |   |     |
+#  |  |   | command line options | |   |     |
+#  |  |   | (override 2)         | |   |     |
+#  |  |   | (-i,-o, ...)         | |   |     |
+#  |  |   | (optional)           | |   |     | 
+#  |  |   +----------------------+ |   |     |
+#  |  +----------------------------+   |     |
+#  +-----------------------------------+   --+
+#
+
+[FILES]
+
+input_audio_path = /dev/stdin
+
+    # the input wav file path encoded as pcm_s16le at 16000 Hz
+    # this by default is stdin. it could also be the path to a
+    # named pipe.
+    # can override with : -i option
+
+output_srt_path = /dev/stdout
+
+    # the output srt file path
+    # can override with : -o option
+
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+    # the phrases file path needed by gcp speech-to-text api
+    # can override with : -p option
+
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
+
+    # the auth file path in json format needed by gcp 
+    # speech-to-text api
+    # can override with : -a option
+
+
+#-------------------------------------------------------------------
+
+[TRANSLATION]
+
+min_word_drain_delay_sec = 3.0
+
+    # When to drain words from the accumulated list.
+    # time diff b/w word_time_offsets.
+
+max_inter_word_duration_ms = 800
+
+    # Maximum allowed word_time_off between two words.
+    # If diff is more next word is put in new subtitle line.
+
+max_subtitle_line_duration_ms = 1500
+
+    # Max duration of a subtitle line
+
+max_chars_in_sub_row = 30
+
+    # Maximum characters in a subtitle line.
+
+max_words_to_search = 4
+
+    # When a new word is inserted between two existing words,
+    # how far do we need to go and search.
+
+#-------------------------------------------------------------------
+
+[IFLAGS]                        
+    # input flags
+
+exit_on_zero_size=true
+
+    # If true, terminates the streamin_stt program upon 
+    # reception of a packet with size 0
+    # See the -z option in stt_audio_packetizer
+
+last_log_time_quanta_ms=5
+
+    # see ReadGen.run
+
+#-------------------------------------------------------------------
+
+[OFLAGS]
+    # output flags
+
+append_mode=true
+
+    # If true, opens the output (srt) file in append mode. 
+    # default is write (overwrite) mode.
+
+append_null_char=true
+
+    # If true, appends the ascii null char after each 
+    # line of srt output
+
+#-------------------------------------------------------------------
+
+[LOGGING]
+
+verbose=false
+
+    # verboseness needed for debugging. values are true|false.
+    # can override with : -v option
+
+
+logger_stream=stderr
+
+    # values are stderr|syslog
+    # can override with : -L option
+
+#-------------------------------------------------------------------
+
+[OTHERS]
+
+no_run=false
+
+    # does not run the program. useful to check configuration.
+    # values are true|false
+    # can override with : -n option
+

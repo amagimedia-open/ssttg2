@@ -45,6 +45,8 @@ set -x
     python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 2 
     python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 3 $DIRNAME/test_cfg.ini
     python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 4 $DIRNAME/test_cfg.ini
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 5
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_cmdargs.py 6
 ) 1>$TMP1 2>&1
 
 set +x

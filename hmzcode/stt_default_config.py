@@ -3,6 +3,33 @@
 #+---------------------------+
 
 stt_default_config_str = """
+
+#
+#  Thu Jan  7 13:31:48 IST 2021
+#
+#  +--------------------------+
+#  | streaming speech to text |
+#  |     configuration        |
+#  +--------------------------+
+#
+#  +-----------------------------------+   --+
+#  |default configuration              |     |
+#  |(base)                             |     |
+#  |  +----------------------------+   |     |
+#  |  | specific configuration     |   |     |
+#  |  | (override 1)               |   |     |final
+#  |  | (-c)                       |   |     |configuration
+#  |  | (optional)                 |   |     |
+#  |  |   +----------------------+ |   |     |
+#  |  |   | command line options | |   |     |
+#  |  |   | (override 2)         | |   |     |
+#  |  |   | (-i,-o, ...)         | |   |     |
+#  |  |   | (optional)           | |   |     | 
+#  |  |   +----------------------+ |   |     |
+#  |  +----------------------------+   |     |
+#  +-----------------------------------+   --+
+#
+
 [FILES]
 
 input_audio_path = /dev/stdin
@@ -10,19 +37,24 @@ input_audio_path = /dev/stdin
     # the input wav file path encoded as pcm_s16le at 16000 Hz
     # this by default is stdin. it could also be the path to a
     # named pipe.
+    # can override with : -i option
 
 output_srt_path = /dev/stdout
 
     # the output srt file path
+    # can override with : -o option
+
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+    # the phrases file path needed by gcp speech-to-text api
+    # can override with : -p option
 
 gcp_auth_path = /mnt/ops/livetranscription/auth.json
 
     # the auth file path in json format needed by gcp 
     # speech-to-text api
+    # can override with : -a option
 
-phrases_path = /mnt/ops/livetranscription/phrases_path
-
-    # the phrases file path needed by gcp speech-to-text api
 
 #-------------------------------------------------------------------
 
@@ -88,10 +120,13 @@ append_null_char=true
 verbose=false
 
     # verboseness needed for debugging. values are true|false.
+    # can override with : -v option
+
 
 logger_stream=stderr
 
     # values are stderr|syslog
+    # can override with : -L option
 
 #-------------------------------------------------------------------
 
@@ -101,5 +136,6 @@ no_run=false
 
     # does not run the program. useful to check configuration.
     # values are true|false
+    # can override with : -n option
 """
 
