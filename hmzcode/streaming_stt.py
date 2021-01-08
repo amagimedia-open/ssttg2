@@ -26,11 +26,136 @@ import amg_logger  as logr
 import stt_globals as glbl
 import stt_cmdargs as args
 import stt_default_config as defconf
-from   stt_srt_writer       import SRTWriter
 from   stt_pcm_stream_state import PCMStreamState
+from   stt_srt_writer       import SRTWriter
 from   stt_google_response_interface import *
 
 #from stt_globals import *
+
+#+---------+
+#| CLASSES |
+#+---------+
+
+class PacketizedPCMReader(threading.Thread):
+
+    @staticmethod
+    def audio_header_get_pts (data):
+        return int.from_bytes(data[4:12], byteorder='little')
+
+    @staticmethod
+    def audio_header_get_data_length (data):
+        return int.from_bytes(data[12:14], byteorder='little')
+
+    def __init__ (self, q):
+        threading.Thread.__init__(self)
+        self.fname = glbl.G_INPUT_AUDIO_PATH
+        self.fp = open (self.fname, mode="rb")
+        self.chunk = glbl.G_CHUNK_SIZE_BYTES 
+        self.exit_flag = False
+        self.q = q
+        self.last_log_time = time.time()
+        self.data_read = 0
+        self.logger = logr.amagi_logger (
+                        "com.amagi.stt.packpcmreader",
+                        logr.LOG_INFO, 
+                        log_stream=glbl.G_LOGGER_STREAM)
+
+    def get_sync_byte_position (self, data):
+        sync_byte = 'c0ffeeee'
+        # /2 as 0xff is one byte but ff are two chars
+        return int(data.hex().find (sync_byte)/2)
+
+    def re_align (self,old_data, sync_pos):
+        if len(old_data) - sync_pos >= glbl.G_AUDIO_HEADER_LEN:
+            data_len = PacketizedPCMReader.audio_header_get_data_length (old_data[sync_pos:])
+            old_data_len = len (old_data) - sync_pos - glbl.G_AUDIO_HEADER_LEN
+            self.logger.info (f"{data_len} ol={old_data_len}")
+            new_data = self.fp.read (data_len-old_data_len)
+            final_data = old_data[sync_pos:] + new_data
+            self.q.put (final_data)
+        
+    def run (self):
+        while not self.exit_flag:
+            #time.sleep(0.01)
+            data = self.fp.read (self.chunk+glbl.G_AUDIO_HEADER_LEN)
+            self.data_read += 32
+            now = time.time ()
+            if now - self.last_log_time >= 5:
+                self.logger.info (f"Data read in last 5000ms is {self.data_read}ms")
+                self.data_read = 0
+                self.last_log_time = now
+            if data and data[0:4].hex() != 'c0ffeeee':
+                self.logger.warn ("Could not get Sync bytes.")
+                pos = self.get_sync_byte_position (data)
+                if pos == -1:
+                    self.logger.info ("Could not get Sync bytes in the entire packet, dropping it.")
+                    continue
+                else:
+                    self.logger.info (f"Re-aligning ...{pos}...{data[pos:pos+5].hex()}...{PacketizedPCMReader.audio_header_get_pts (data[pos:])}..")
+                    self.re_align (data, pos)
+                    continue
+            #else:
+            #    print ('Got syncbyte')
+            if (PacketizedPCMReader.audio_header_get_data_length (data)) == 0:
+                main_logger.warn ("Received audio packet with length=0, Exiting...")
+                glbl.G_EXIT_FLAG = True
+                break
+            self.q.put (data)
+
+class PCMGenerator ():
+    def __init__ (self, q, stream):
+        self.q = q
+        self.exit_flag = False
+        self.stream = stream
+        self.logger = logr.amagi_logger (
+                        "com.amagi.stt.PCMGenerator", 
+                        logr.LOG_INFO, 
+                        log_stream=glbl.G_LOGGER_STREAM)
+        self.time0_ms = 0
+
+    def parse_audio_packet (self, data):
+        if data and data[0:4].hex() != 'c0ffeeee':
+            self.logger.error(f"Could not get Sync bytes. Aborting...{data[0:4].hex()}")
+            os._exit (0)
+        #print (f"{data[4:9].hex()} ========")
+        pts = PacketizedPCMReader.audio_header_get_pts (data)
+        data_len = PacketizedPCMReader.audio_header_get_data_length (data)
+        running_pts = (self.stream.restart_counter * glbl.G_STREAMING_LIMIT) + self.stream.consumed_ms
+        #print (f"add map[{running_pts}] = {pts}")
+        if (pts > 0):
+            curr_time_ms = comn.now_2_epochms()
+            if (self.time0_ms == 0):
+                self.time0_ms = curr_time_ms
+            rel_time_ms = curr_time_ms - self.time0_ms
+            self.logger.info(f"Received-data: reltime={rel_time_ms}, pts={pts}, len={data_len}")
+        
+        self.stream.audio_pts_map_lock.acquire ()
+        self.stream.audio_pts_map[running_pts] = pts
+        self.stream.audio_pts_map_lock.release ()
+        #print (f"pts:{pts} len:{data_len} {len(data[glbl.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
+        #print(data[10:data[9]])
+        return data[glbl.G_AUDIO_HEADER_LEN : data_len+glbl.G_AUDIO_HEADER_LEN]
+
+    def get_bytes (self):
+        global main_logger
+
+        data = self.stream.get_data_from_pts ()
+        if data:
+            yield data
+
+        while not self.exit_flag and self.stream.consumed_ms < glbl.G_STREAMING_LIMIT:
+
+            try:
+                data = self.parse_audio_packet (self.q.get ())
+                self.stream.push_to_sent_q (data)
+                self.stream.incr_consumed_ms(glbl.G_CHUNK_MS)
+                yield data
+            except:
+                main_logger.error(traceback.format_exc())
+                os._exit(1)
+
+
+        self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
 
 #+-----------+
 #| FUNCTIONS |
@@ -117,125 +242,6 @@ def queue_transcription_responses(responses, pcm_stream_state, q):
 
             num_chars_printed = 0
 
-def audio_header_get_pts (data):
-    return int.from_bytes(data[4:12], byteorder='little')
-
-def audio_header_get_data_length (data):
-    return int.from_bytes(data[12:14], byteorder='little')
-
-class PacketizedPCMReader(threading.Thread):
-    def __init__ (self, q):
-        threading.Thread.__init__(self)
-        self.fname = glbl.G_INPUT_AUDIO_PATH
-        self.fp = open (self.fname, mode="rb")
-        self.chunk = glbl.G_CHUNK_SIZE_BYTES 
-        self.exit_flag = False
-        self.q = q
-        self.last_log_time = time.time()
-        self.data_read = 0
-        self.logger = logr.amagi_logger (
-                        "com.amagi.stt.packpcmreader",
-                        logr.LOG_INFO, 
-                        log_stream=glbl.G_LOGGER_STREAM)
-
-    def get_sync_byte_position (self, data):
-        sync_byte = 'c0ffeeee'
-        # /2 as 0xff is one byte but ff are two chars
-        return int(data.hex().find (sync_byte)/2)
-
-    def re_align (self,old_data, sync_pos):
-        if len(old_data) - sync_pos >= glbl.G_AUDIO_HEADER_LEN:
-            data_len = audio_header_get_data_length (old_data[sync_pos:])
-            old_data_len = len (old_data) - sync_pos - glbl.G_AUDIO_HEADER_LEN
-            self.logger.info (f"{data_len} ol={old_data_len}")
-            new_data = self.fp.read (data_len-old_data_len)
-            final_data = old_data[sync_pos:] + new_data
-            self.q.put (final_data)
-        
-    def run (self):
-        while not self.exit_flag:
-            #time.sleep(0.01)
-            data = self.fp.read (self.chunk+glbl.G_AUDIO_HEADER_LEN)
-            self.data_read += 32
-            now = time.time ()
-            if now - self.last_log_time >= 5:
-                self.logger.info (f"Data read in last 5000ms is {self.data_read}ms")
-                self.data_read = 0
-                self.last_log_time = now
-            if data and data[0:4].hex() != 'c0ffeeee':
-                self.logger.warn ("Could not get Sync bytes.")
-                pos = self.get_sync_byte_position (data)
-                if pos == -1:
-                    self.logger.info ("Could not get Sync bytes in the entire packet, dropping it.")
-                    continue
-                else:
-                    self.logger.info (f"Re-aligning ...{pos}...{data[pos:pos+5].hex()}...{audio_header_get_pts (data[pos:])}..")
-                    self.re_align (data, pos)
-                    continue
-            #else:
-            #    print ('Got syncbyte')
-            if (audio_header_get_data_length (data)) == 0:
-                main_logger.warn ("Received audio packet with length=0, Exiting...")
-                glbl.G_EXIT_FLAG = True
-                break
-            self.q.put (data)
-
-class PCMPacketGenerator ():
-    def __init__ (self, q, stream):
-        self.q = q
-        self.exit_flag = False
-        self.stream = stream
-        self.logger = logr.amagi_logger (
-                        "com.amagi.stt.PCMPacketGenerator", 
-                        logr.LOG_INFO, 
-                        log_stream=glbl.G_LOGGER_STREAM)
-        self.time0_ms = 0
-
-    def parse_audio_packet (self, data):
-        if data and data[0:4].hex() != 'c0ffeeee':
-            self.logger.error(f"Could not get Sync bytes. Aborting...{data[0:4].hex()}")
-            os._exit (0)
-        #print (f"{data[4:9].hex()} ========")
-        pts = audio_header_get_pts (data)
-        data_len = audio_header_get_data_length (data)
-        running_pts = (self.stream.restart_counter * glbl.G_STREAMING_LIMIT) + self.stream.consumed_ms
-        #print (f"add map[{running_pts}] = {pts}")
-        if (pts > 0):
-            curr_time_ms = comn.now_2_epochms()
-            if (self.time0_ms == 0):
-                self.time0_ms = curr_time_ms
-            rel_time_ms = curr_time_ms - self.time0_ms
-            self.logger.info(f"Received-data: reltime={rel_time_ms}, pts={pts}, len={data_len}")
-        
-        self.stream.audio_pts_map_lock.acquire ()
-        self.stream.audio_pts_map[running_pts] = pts
-        self.stream.audio_pts_map_lock.release ()
-        #print (f"pts:{pts} len:{data_len} {len(data[glbl.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
-        #print(data[10:data[9]])
-        return data[glbl.G_AUDIO_HEADER_LEN : data_len+glbl.G_AUDIO_HEADER_LEN]
-
-    def get_bytes (self):
-        global main_logger
-
-        data = self.stream.get_data_from_pts ()
-        if data:
-            yield data
-
-        while not self.exit_flag and self.stream.consumed_ms < glbl.G_STREAMING_LIMIT:
-
-            try:
-                data = self.parse_audio_packet (self.q.get ())
-                self.stream.push_to_sent_q (data)
-                self.stream.incr_consumed_ms(glbl.G_CHUNK_MS)
-                yield data
-            except:
-                main_logger.error(traceback.format_exc())
-                os._exit(1)
-
-
-        self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
-
-
 def get_phrases_list ():
     phrases = []
 
@@ -304,7 +310,7 @@ def main():
     #|                                                       V             |
     #|                                                   [ pcm_q ]         |
     #|                                                       V             |
-    #|                                   requests  ( PCMPacketGenerator )  |
+    #|                                   requests      ( PCMGenerator )    |
     #|                                      V                .             |
     #|                             streaming_recognize       .             |
     #|                                      V                .             |
@@ -332,7 +338,7 @@ def main():
     while not glbl.G_EXIT_FLAG:
         try:
             # creating a generator using data supplied by PacketizedPCMReader
-            generator_obj = PCMPacketGenerator (pcm_q, pcm_stream_state)
+            generator_obj = PCMGenerator (pcm_q, pcm_stream_state)
             audio_generator = generator_obj.get_bytes()
 
             for data in audio_generator:    #blocks until there is data
