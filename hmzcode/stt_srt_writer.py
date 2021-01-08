@@ -30,13 +30,13 @@ def milliseconds_to_HMS (ms):
 class SRTWriter (threading.Thread):
     def __init__(self, q):
         threading.Thread.__init__(self)
-        self.threadID = glbl.G_SRT_THREAD_ID
-        self.name = glbl.G_SRT_THREAD_NAME
+        self.threadID = glbl.G_SRT_WRITER_THREAD_ID
+        self.name = glbl.G_SRT_WRITER_THREAD_NAME
+
         self.q = q
-        self.exit_flag = False
         self.verbose_mode = glbl.G_VERBOSE
         self.logger = amg_logger.amagi_logger (
-                        "com.amagi.stt.resp_to_srt", 
+                        "com.amagi.stt.srt_writer", 
                         amg_logger.LOG_INFO, 
                         log_stream=glbl.G_LOGGER_STREAM)
         if glbl.G_OFLAGS_APPEND_MODE:
@@ -253,12 +253,15 @@ class SRTWriter (threading.Thread):
         self.logger.debug (str(self.words_list))
 
     def run(self):
-        self.logger.info ("Starting " + self.name)
+        self.logger.info (f"{self.name} thread starting")
+
         loop_count = 0
-        while not self.exit_flag:
+        while not glbl.G_EXIT_FLAG:
+
             try:
                 result = stream = None
-                stream, result, rtime = self.q.get(timeout=0.1) # 100ms.
+                stream, result, rtime = \
+                    self.q.get(timeout=glbl.G_SRT_WRITER_Q_READ_TIMEOUT)
             except:
                 pass
 
@@ -308,4 +311,6 @@ class SRTWriter (threading.Thread):
                     self.last_rcvd_epoch = rtime
             except:
                 self.logger.error (traceback.format_exc().replace("\n", " "))
-        self.logger.info ("Exiting " + self.name)
+
+        self.logger.info (f"{self.name} thread ending")
+

@@ -36,16 +36,25 @@ G_RESP_LIST_WORD_MTIME_INDX = 3
 #| Others |
 #+--------+
 
-G_EXIT_FLAG = False
-main_logger = None
+G_PACKPCM_READER_THREAD_ID    = 1
+G_PACKPCM_READER_THREAD_NAME  = "packpcm_reader"
 
-G_SRT_THREAD_ID    = 1
-G_SRT_THREAD_NAME  = "audio_to_srt_1"
+G_SRT_WRITER_THREAD_ID        = 2
+G_SRT_WRITER_THREAD_NAME      = "srt_writer"
+
 G_LANGUAGE_CODE    = 'en-US'  # a BCP-47 language tag
 G_MAX_PHRASES      = 5000
 G_PHRASES_ENCODING = "utf-8"
 G_MIN_TRANSCRIPTION_STABILITY = 0.85
 G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE = 5
+G_SRT_WRITER_Q_READ_TIMEOUT=0.1 #100ms
+
+#+---------+
+#| Runtime |
+#+---------+
+
+G_EXIT_FLAG = False
+main_logger = None
 
 #+-----------+
 #| FUNCTIONS |

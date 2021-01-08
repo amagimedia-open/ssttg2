@@ -30,15 +30,17 @@ class PacketizedPCMReader(threading.Thread):
 
     def __init__ (self, q):
         threading.Thread.__init__(self)
+        self.threadID = glbl.G_PACKPCM_READER_THREAD_ID
+        self.name = glbl.G_PACKPCM_READER_THREAD_NAME
+
         self.fname = glbl.G_INPUT_AUDIO_PATH
         self.fp = open (self.fname, mode="rb")
         self.chunk = glbl.G_CHUNK_SIZE_BYTES 
-        self.exit_flag = False
         self.q = q
         self.last_log_time = time.time()
         self.data_read = 0
         self.logger = logr.amagi_logger (
-                        "com.amagi.stt.packpcmreader",
+                        "com.amagi.stt.packpcm_reader",
                         logr.LOG_INFO, 
                         log_stream=glbl.G_LOGGER_STREAM)
 
@@ -57,7 +59,9 @@ class PacketizedPCMReader(threading.Thread):
             self.q.put (final_data)
         
     def run (self):
-        while not self.exit_flag:
+        self.logger.info (f"{self.name} thread starting")
+
+        while not glbl.G_EXIT_FLAG:
             #time.sleep(0.01)
             data = self.fp.read (self.chunk+glbl.G_AUDIO_HEADER_LEN)
             self.data_read += 32
@@ -79,8 +83,12 @@ class PacketizedPCMReader(threading.Thread):
             #else:
             #    print ('Got syncbyte')
             if (PacketizedPCMReader.audio_header_get_data_length (data)) == 0:
-                main_logger.warn ("Received audio packet with length=0, Exiting...")
-                glbl.G_EXIT_FLAG = True
-                break
+                self.logger.info ("Received audio packet with length=0")
+                if (glbl.G_IFLAGS_EXIT_ON_ZERO_SIZE):
+                    glbl.G_EXIT_FLAG = True
+                    break
+
             self.q.put (data)
+
+        self.logger.info (f"{self.name} thread ending")
 

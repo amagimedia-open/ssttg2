@@ -31,7 +31,9 @@ from   stt_packpcm_reader   import PacketizedPCMReader
 from   stt_srt_writer       import SRTWriter
 from   stt_google_response_interface import *
 
-#from stt_globals import *
+#+---------+
+#| GLOBALS |
+#+---------+
 
 #+---------+
 #| CLASSES |
@@ -41,10 +43,10 @@ from   stt_google_response_interface import *
 # only, else the google api throws some RPC errors
 
 class PCMGenerator ():
-    def __init__ (self, q, stream):
+    def __init__ (self, q, pcm_stream_state):
         self.q = q
         self.exit_flag = False
-        self.stream = stream
+        self.pcm_stream_state = pcm_stream_state
         self.logger = logr.amagi_logger (
                         "com.amagi.stt.PCMGenerator", 
                         logr.LOG_INFO, 
@@ -58,7 +60,7 @@ class PCMGenerator ():
         #print (f"{data[4:9].hex()} ========")
         pts = PacketizedPCMReader.audio_header_get_pts (data)
         data_len = PacketizedPCMReader.audio_header_get_data_length (data)
-        running_pts = (self.stream.restart_counter * glbl.G_STREAMING_LIMIT) + self.stream.consumed_ms
+        running_pts = (self.pcm_stream_state.restart_counter * glbl.G_STREAMING_LIMIT) + self.pcm_stream_state.consumed_ms
         #print (f"add map[{running_pts}] = {pts}")
         if (pts > 0):
             curr_time_ms = comn.now_2_epochms()
@@ -67,33 +69,32 @@ class PCMGenerator ():
             rel_time_ms = curr_time_ms - self.time0_ms
             self.logger.info(f"Received-data: reltime={rel_time_ms}, pts={pts}, len={data_len}")
         
-        self.stream.audio_pts_map_lock.acquire ()
-        self.stream.audio_pts_map[running_pts] = pts
-        self.stream.audio_pts_map_lock.release ()
+        self.pcm_stream_state.audio_pts_map_lock.acquire ()
+        self.pcm_stream_state.audio_pts_map[running_pts] = pts
+        self.pcm_stream_state.audio_pts_map_lock.release ()
         #print (f"pts:{pts} len:{data_len} {len(data[glbl.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
         #print(data[10:data[9]])
         return data[glbl.G_AUDIO_HEADER_LEN : data_len+glbl.G_AUDIO_HEADER_LEN]
 
     def get_bytes (self):
-        global main_logger
 
-        data = self.stream.get_data_from_pts ()
+        data = self.pcm_stream_state.get_data_from_pts ()
         if data:
             yield data
 
-        while not self.exit_flag and self.stream.consumed_ms < glbl.G_STREAMING_LIMIT:
+        while not self.exit_flag and self.pcm_stream_state.consumed_ms < glbl.G_STREAMING_LIMIT:
 
             try:
                 data = self.parse_audio_packet (self.q.get ())
-                self.stream.push_to_sent_q (data)
-                self.stream.incr_consumed_ms(glbl.G_CHUNK_MS)
+                self.pcm_stream_state.push_to_sent_q (data)
+                self.pcm_stream_state.incr_consumed_ms(glbl.G_CHUNK_MS)
                 yield data
             except:
-                main_logger.error(traceback.format_exc())
+                glbl.main_logger.error(traceback.format_exc())
                 os._exit(1)
 
 
-        self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
+        self.logger.info (f"Exiting generator, bytes put = {self.pcm_stream_state.consumed_ms}")
 
 #+-----------+
 #| FUNCTIONS |
@@ -115,13 +116,11 @@ def queue_transcription_responses(responses, pcm_stream_state, q):
     final one, print a newline to preserve the finalized transcription.
     """
 
-    global main_logger
-
     num_chars_printed = 0
     for response in responses:
         if pcm_stream_state.consumed_ms >= glbl.G_STREAMING_LIMIT:
             #pcm_stream_state.stream_time = get_current_time ()
-            main_logger.info(f"timeout breaking out of responses loop,"
+            glbl.main_logger.info(f"timeout breaking out of responses loop,"
                               "consumed_ms={pcm_stream_state.consumed_ms}")
             #break
 
@@ -190,11 +189,11 @@ def get_phrases_list ():
                     if line:
                         phrases.append (line.strip().encode ('ascii', 'ignore').decode('ascii'))
         except FileNotFoundError:
-            main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is not present.")
+            glbl.main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is not present.")
         except:
-            main_logger.error(traceback.format_exc())
+            glbl.main_logger.error(traceback.format_exc())
     else:
-        main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is null.")
+        glbl.main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is null.")
 
     return phrases
 
@@ -205,7 +204,7 @@ def create_sstt_client_and_config():
     """
 
     phrases = get_phrases_list ()
-    main_logger.info(f"Number of phrases as context = {len(phrases)}")
+    glbl.main_logger.info(f"Number of phrases as context = {len(phrases)}")
     speech_context = speech.SpeechContext(phrases=phrases[:glbl.G_MAX_PHRASES])
 
     try:
@@ -228,12 +227,12 @@ def create_sstt_client_and_config():
         return (client, streaming_config)
 
     except google.auth.exceptions.DefaultCredentialsError:
-        main_logger.error("Export authorization json in environment")
+        glbl.main_logger.error("Export authorization json in environment")
         srt_gen.exit_flag = True
         srt_gen.join ()
         sys.exit(1)
     except:
-        main_logger.error(traceback.format_exc())
+        glbl.main_logger.error(traceback.format_exc())
         sys.exit(1)
 
 
@@ -241,7 +240,6 @@ def main():
 
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
-    global main_logger
 
     #+---------------------------------------------------------------------+
     #|                                      (thread) PacketizedPCMReader   |
@@ -305,33 +303,31 @@ def main():
 
             pcm_stream_state.on_iteration_complete()
 
-            main_logger.info("=====RETRY AFTER 5MIN====="
+            glbl.main_logger.info("=====RETRY AFTER 5MIN====="
                              "last_sent={pcm_stream_state.last_sub_pts}")
 
             lk = pcm_stream_state.get_last_key()
             if (lk != None):
-                main_logger.info(
+                glbl.main_logger.info(
                     f"=====audio_pts_map[{lk}] = "
                      "{pcm_stream_state.audio_pts_map[lk]}======")
 
         except google.api_core.exceptions.ServiceUnavailable:
 
-            main_logger.info("=====ServiceUnavailable exception.===RETRY=====")
+            glbl.main_logger.info("=====ServiceUnavailable exception.===RETRY=====")
             time.sleep (glbl.G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE)
 
         except:
 
-            main_logger.error(traceback.format_exc())
+            glbl.main_logger.error(traceback.format_exc())
             srt_gen.exit_flag = True 
             generator_obj.exit_flag = True
             srt_gen.join ()
-            main_logger.info ("## Exited writer")
+            glbl.main_logger.info ("## Exited writer")
             glbl.G_EXIT_FLAG = True
             break
 
 if __name__ == '__main__':
-
-    global main_logger
 
     (dump_def_config, cp) = args.gen_config_from_cmdargs (sys.argv[1:])
     if (dump_def_config):
@@ -347,24 +343,24 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # see stt_globals.py
-    main_logger = logr.amagi_logger (
+    glbl.main_logger = logr.amagi_logger (
                   "com.amagi.stt.main", 
                   logr.LOG_INFO, 
                   log_stream=glbl.G_LOGGER_STREAM)
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = glbl.G_GCP_AUTH_PATH
     
-    while not glbl.G_EXIT_FLAG:
-        try:
-            main()
-            main_logger.info("main() over")
-        except KeyboardInterrupt:
-            glbl.G_EXIT_FLAG = True
-            sys.exit(0)
-        except:
-            main_logger.error(traceback.format_exc())
-            sys.exit(1)
+    #while not glbl.G_EXIT_FLAG:
+    try:
+        main()
+        glbl.main_logger.info("main() over")
+    except KeyboardInterrupt:
+        glbl.G_EXIT_FLAG = True
+        sys.exit(0)
+    except:
+        glbl.main_logger.error(traceback.format_exc())
+        sys.exit(1)
 
-    main_logger.info ("### Exited Main")
+    glbl.main_logger.info ("### Exited Main")
     os._exit(0)
 
