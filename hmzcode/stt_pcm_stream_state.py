@@ -10,16 +10,16 @@ def get_current_time():
 
     return int(round(time.time() * 1000))
 
-class StreamDataStructure ():
+class PCMStreamState ():
     def __init__ (self):
         self.stream_time = get_current_time ()
         self.restart_counter = 0
-        self.consumed_ms = 0
+        self._consumed_ms = 0
         self.last_iter_consumed_ms = 0
         self.max_sent_audio_q_len = 500 / G_CHUNK_MS
         self.sent_audio_q = queue.Queue ()
         self.sent_q_head_pts = 0
-        self.last_sub_pts = 0
+        self._last_sub_pts = 0
         self.old_data_sent_ms = 0
         self.audio_pts_map = OrderedDict () # 0_pts:actual:pts
         self.audio_pts_map_lock = threading.Lock ()
@@ -46,7 +46,7 @@ class StreamDataStructure ():
 
     def get_data_from_pts (self):
         data = None
-        pts = self.last_sub_pts + (self.restart_counter-1) * G_STREAMING_LIMIT
+        pts = self._last_sub_pts + (self.restart_counter-1) * G_STREAMING_LIMIT
         hpts = self.sent_q_head_pts
         tpts = hpts + (self.sent_audio_q.qsize () * G_CHUNK_MS)
         print (f"get_data_from_pts ,pts={pts} hpts={hpts} tpts={tpts} == {pts < hpts or pts > tpts and tpts-pts >= G_CHUNK_MS}")
@@ -74,3 +74,29 @@ class StreamDataStructure ():
 
         return data
       
+    def on_iteration_complete (self):
+        self.restart_counter += 1
+        self.last_iter_consumed_ms += self._consumed_ms
+        self._consumed_ms = 0
+
+    def update_last_sub_pts (self, result_end_time_ms):
+        self._last_sub_pts = \
+            result_end_time_ms - self.old_data_sent_ms
+
+    @property
+    def consumed_ms(self):
+        return self._consumed_ms
+
+    def incr_consumed_ms(self, val):
+        self._consumed_ms += val
+
+    @property
+    def last_sub_pts(self):
+        return self._last_sub_pts
+
+    def get_last_key(self):
+        lk = None
+        if len(self.audio_pts_map.keys ()) > 0:
+            lk = list(self.audio_pts_map.keys ())[-1]
+        return lk
+

@@ -391,6 +391,7 @@ case $OPT_OP in
                 -f |\
             python3 $G_HMZCODE_FOLDER_PATH/streaming_stt.py \
                 $TRANSCRIBE_VERBOSITY \
+                -i /dev/stdin \
                 -o $OPT_OUTPUT_FILEPATH \
                 -c $OPT_CONFIG_FILEPATH \
                 -a $OPT_AUTH_FILEPATH

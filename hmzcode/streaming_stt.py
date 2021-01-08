@@ -25,9 +25,9 @@ import stt_commons as comn
 import amg_logger  as logr
 import stt_globals as glbl
 import stt_cmdargs as args
-import stt_default_config
-from   response_to_srt    import ResponseToSRT
-from   stt_data_structure import StreamDataStructure
+import stt_default_config as defconf
+from   stt_srt_writer       import SRTWriter
+from   stt_pcm_stream_state import PCMStreamState
 from   stt_google_response_interface import *
 
 #from stt_globals import *
@@ -36,7 +36,7 @@ from   stt_google_response_interface import *
 #| FUNCTIONS |
 #+-----------+
 
-def listen_print_loop(q, responses, stream_obj):
+def queue_transcription_responses(responses, pcm_stream_state, q):
     """Iterates through server responses and prints them.
 
     The responses passed is a generator that will block until a response
@@ -56,9 +56,10 @@ def listen_print_loop(q, responses, stream_obj):
 
     num_chars_printed = 0
     for response in responses:
-        if stream_obj.consumed_ms >= G_STREAMING_LIMIT:
-            #stream_obj.stream_time = get_current_time ()
-            main_logger.info(f"timeout breaking out of responses loop, consumed_ms={stream_obj.consumed_ms}")
+        if pcm_stream_state.consumed_ms >= glbl.G_STREAMING_LIMIT:
+            #pcm_stream_state.stream_time = get_current_time ()
+            main_logger.info(f"timeout breaking out of responses loop,"
+                              "consumed_ms={pcm_stream_state.consumed_ms}")
             #break
 
         if not response.results:
@@ -74,7 +75,8 @@ def listen_print_loop(q, responses, stream_obj):
         
 
         # Display the transcription of the top alternative.
-        if result.stability < 0.85 and (not result.is_final):
+        if result.stability < glbl.G_MIN_TRANSCRIPTION_STABILITY and \
+           (not result.is_final):
             continue
 
         if not result.alternatives:
@@ -85,10 +87,11 @@ def listen_print_loop(q, responses, stream_obj):
         transcript = result.alternatives[0].transcript
         amg_result = ResponeInterface ()
         google_response_to_amg (result, amg_result)
-        q.put ([stream_obj, amg_result, time_now])
-        stream_obj.last_sub_pts = result.result_end_time.seconds*1000 + \
-                                  result.result_end_time.microseconds/1000 - \
-                                  stream_obj.old_data_sent_ms
+        q.put ([pcm_stream_state, amg_result, time_now])
+
+        result_end_time_ms = result.result_end_time.seconds*1000 + \
+                             result.result_end_time.microseconds/1000
+        pcm_stream_state.update_last_sub_pts (result_end_time_ms)
 
         # Display interim results, but with a carriage return at the end of the
         # line, so subsequent lines will overwrite them.
@@ -120,20 +123,20 @@ def audio_header_get_pts (data):
 def audio_header_get_data_length (data):
     return int.from_bytes(data[12:14], byteorder='little')
 
-class ReadGen(threading.Thread):
-    def __init__ (self, inp_file, G_CHUNK_SIZE_BYTES, q, exit_on_zero_size):
+class PacketizedPCMReader(threading.Thread):
+    def __init__ (self, q):
         threading.Thread.__init__(self)
-        self.fname = inp_file
+        self.fname = glbl.G_INPUT_AUDIO_PATH
         self.fp = open (self.fname, mode="rb")
-        self.chunk = G_CHUNK_SIZE_BYTES 
+        self.chunk = glbl.G_CHUNK_SIZE_BYTES 
         self.exit_flag = False
         self.q = q
         self.last_log_time = time.time()
         self.data_read = 0
         self.logger = logr.amagi_logger (
-                        "com.amagi.stt.readgen",
+                        "com.amagi.stt.packpcmreader",
                         logr.LOG_INFO, 
-                        log_stream=G_LOGGER_STREAM)
+                        log_stream=glbl.G_LOGGER_STREAM)
 
     def get_sync_byte_position (self, data):
         sync_byte = 'c0ffeeee'
@@ -141,9 +144,9 @@ class ReadGen(threading.Thread):
         return int(data.hex().find (sync_byte)/2)
 
     def re_align (self,old_data, sync_pos):
-        if len(old_data) - sync_pos >= G_AUDIO_HEADER_LEN:
+        if len(old_data) - sync_pos >= glbl.G_AUDIO_HEADER_LEN:
             data_len = audio_header_get_data_length (old_data[sync_pos:])
-            old_data_len = len (old_data) - sync_pos - G_AUDIO_HEADER_LEN
+            old_data_len = len (old_data) - sync_pos - glbl.G_AUDIO_HEADER_LEN
             self.logger.info (f"{data_len} ol={old_data_len}")
             new_data = self.fp.read (data_len-old_data_len)
             final_data = old_data[sync_pos:] + new_data
@@ -152,7 +155,7 @@ class ReadGen(threading.Thread):
     def run (self):
         while not self.exit_flag:
             #time.sleep(0.01)
-            data = self.fp.read (self.chunk+G_AUDIO_HEADER_LEN)
+            data = self.fp.read (self.chunk+glbl.G_AUDIO_HEADER_LEN)
             self.data_read += 32
             now = time.time ()
             if now - self.last_log_time >= 5:
@@ -177,13 +180,13 @@ class ReadGen(threading.Thread):
                 break
             self.q.put (data)
 
-class GeneratorClass ():
+class PCMPacketGenerator ():
     def __init__ (self, q, stream):
         self.q = q
         self.exit_flag = False
         self.stream = stream
         self.logger = logr.amagi_logger (
-                        "com.amagi.stt.GeneratorClass", 
+                        "com.amagi.stt.PCMPacketGenerator", 
                         logr.LOG_INFO, 
                         log_stream=glbl.G_LOGGER_STREAM)
         self.time0_ms = 0
@@ -195,7 +198,7 @@ class GeneratorClass ():
         #print (f"{data[4:9].hex()} ========")
         pts = audio_header_get_pts (data)
         data_len = audio_header_get_data_length (data)
-        running_pts = (self.stream.restart_counter * G_STREAMING_LIMIT) + self.stream.consumed_ms
+        running_pts = (self.stream.restart_counter * glbl.G_STREAMING_LIMIT) + self.stream.consumed_ms
         #print (f"add map[{running_pts}] = {pts}")
         if (pts > 0):
             curr_time_ms = comn.now_2_epochms()
@@ -207,9 +210,9 @@ class GeneratorClass ():
         self.stream.audio_pts_map_lock.acquire ()
         self.stream.audio_pts_map[running_pts] = pts
         self.stream.audio_pts_map_lock.release ()
-        #print (f"pts:{pts} len:{data_len} {len(data[G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
+        #print (f"pts:{pts} len:{data_len} {len(data[glbl.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
         #print(data[10:data[9]])
-        return data[G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN]
+        return data[glbl.G_AUDIO_HEADER_LEN : data_len+glbl.G_AUDIO_HEADER_LEN]
 
     def get_bytes (self):
         global main_logger
@@ -217,12 +220,13 @@ class GeneratorClass ():
         data = self.stream.get_data_from_pts ()
         if data:
             yield data
-        while not self.exit_flag and self.stream.consumed_ms < G_STREAMING_LIMIT:
+
+        while not self.exit_flag and self.stream.consumed_ms < glbl.G_STREAMING_LIMIT:
 
             try:
                 data = self.parse_audio_packet (self.q.get ())
                 self.stream.push_to_sent_q (data)
-                self.stream.consumed_ms += G_CHUNK_MS
+                self.stream.incr_consumed_ms(glbl.G_CHUNK_MS)
                 yield data
             except:
                 main_logger.error(traceback.format_exc())
@@ -231,25 +235,13 @@ class GeneratorClass ():
 
         self.logger.info (f"Exiting generator, bytes put = {self.stream.consumed_ms}")
 
-def main():
 
-    # See http://g.co/cloud/speech/docs/languages
-    # for a list of supported languages.
-    global G_EXIT_FLAG
-    global main_logger
-
-    language_code = 'en-US'  # a BCP-47 language tag
-
-    q_obj = queue.Queue ()
-    audio_q = queue.Queue(maxsize=G_MAX_AUDIO_BUFFER)
-
-    response_to_srt_obj = ResponseToSRT (q_obj)
-    response_to_srt_obj.start ()
-    
+def get_phrases_list ():
     phrases = []
+
     if (len(glbl.G_PHRASES_PATH) != 0):
         try:
-            with open (glbl.G_PHRASES_PATH, "r", encoding='utf-8') as fp:
+            with open (glbl.G_PHRASES_PATH, "r", encoding=glbl.G_PHRASES_ENCODING) as fp:
                 for line in fp:
                     if line:
                         phrases.append (line.strip().encode ('ascii', 'ignore').decode('ascii'))
@@ -259,86 +251,147 @@ def main():
             main_logger.error(traceback.format_exc())
     else:
         main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is null.")
- 
-    speech_context = speech.SpeechContext(phrases=phrases[:5000])
+
+    return phrases
+
+
+def create_sstt_client_and_config():
+    """
+        returns a tuple (client, config)
+    """
+
+    phrases = get_phrases_list ()
+    main_logger.info(f"Number of phrases as context = {len(phrases)}")
+    speech_context = speech.SpeechContext(phrases=phrases[:glbl.G_MAX_PHRASES])
+
     try:
         client = speech.SpeechClient()
+
         config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=G_AUD_SAMPLING_RATE,
-            enable_word_time_offsets=False,
-            model='video',
-            profanity_filter=True,
-            enable_automatic_punctuation=True,
-            speech_contexts=[speech_context],
-            language_code=language_code)
+                    encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                    sample_rate_hertz=glbl.G_AUD_SAMPLING_RATE,
+                    enable_word_time_offsets=False,
+                    model='video',
+                    profanity_filter=True,
+                    enable_automatic_punctuation=True,
+                    speech_contexts=[speech_context],
+                    language_code=glbl.G_LANGUAGE_CODE)
+
         streaming_config = speech.StreamingRecognitionConfig(
-            config=config,
-            interim_results=True)
+                            config=config,
+                            interim_results=True)
+
+        return (client, streaming_config)
+
     except google.auth.exceptions.DefaultCredentialsError:
         main_logger.error("Export authorization json in environment")
-        response_to_srt_obj.exit_flag = True
-        response_to_srt_obj.join ()
+        srt_gen.exit_flag = True
+        srt_gen.join ()
         sys.exit(1)
     except:
         main_logger.error(traceback.format_exc())
         sys.exit(1)
 
-    stream_obj = StreamDataStructure ()
-    main_logger.info(f"Number of phrases as context = {len(phrases)}")
 
-    reader = ReadGen (glbl.G_INPUT_AUDIO_PATH, 
-                      glbl.G_CHUNK_SIZE_BYTES, 
-                      audio_q, \
-                      exit_on_zero_size=glbl.G_IFLAGS_EXIT_ON_ZERO_SIZE)
-    reader.start ()
+def main():
 
-    while not G_EXIT_FLAG:
-        try:
-            generator_obj = GeneratorClass (audio_q, stream_obj)
-            audio_generator = generator_obj.get_bytes()
-            for data in audio_generator:
-                break
-            requests = (speech.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator)
-
-            responses = client.streaming_recognize(streaming_config, requests)
-
-            # Now, put the transcription responses to use.
-            listen_print_loop(q_obj, responses, stream_obj)
-            stream_obj.restart_counter += 1
-            stream_obj.last_iter_consumed_ms += stream_obj.consumed_ms
-            stream_obj.consumed_ms = 0
-            main_logger.info("===============RETRY AFTER 5MIN======last_sent={stream_obj.last_sub_pts}")
-            if len(stream_obj.audio_pts_map.keys ()) > 0:
-                lk = list(stream_obj.audio_pts_map.keys ())[-1]
-                main_logger.info(f"===audio_pts_map[{lk}] = {stream_obj.audio_pts_map[lk]}===========")
-
-        except google.api_core.exceptions.ServiceUnavailable:
-            main_logger.info("===============ServiceUnavailable exception.===RETRY===================")
-            time.sleep (5)
-        except:
-            main_logger.error(traceback.format_exc())
-            response_to_srt_obj.exit_flag = True 
-            generator_obj.exit_flag = True
-            response_to_srt_obj.join ()
-            main_logger.info ("## Exited writer")
-            G_EXIT_FLAG = True
-            break
-
-def usage():
+    # See http://g.co/cloud/speech/docs/languages
+    # for a list of supported languages.
     global main_logger
 
-    main_logger.info("TODO: usage")
+    #+---------------------------------------------------------------------+
+    #|                                      (thread) PacketizedPCMReader   |
+    #|                                                       V             |
+    #|                                                   [ pcm_q ]         |
+    #|                                                       V             |
+    #|                                   requests  ( PCMPacketGenerator )  |
+    #|                                      V                .             |
+    #|                             streaming_recognize       .             |
+    #|                                      V                .             |
+    #| queue_transcription_responses ( responses )           .             |
+    #|             V              .   <generator>            .             |
+    #|             V              +.......................+  .             |
+    #| [ transcription_response_q ]                       .  .             |
+    #|             V                                      .  .             |
+    #|         SRTWriter (thread)                       PCMStreamState     |
+    #|                                                                     |
+    #+---------------------------------------------------------------------+
+
+    pcm_stream_state = PCMStreamState()
+
+    (streaming_client, streaming_config) = create_sstt_client_and_config()
+
+    transcription_response_q = queue.Queue ()
+    srt_gen = SRTWriter (transcription_response_q)
+    srt_gen.start ()
+    
+    pcm_q = queue.Queue (maxsize=glbl.G_MAX_AUDIO_BUFFER)
+    reader  = PacketizedPCMReader (pcm_q)
+    reader.start ()
+
+    while not glbl.G_EXIT_FLAG:
+        try:
+            # creating a generator using data supplied by PacketizedPCMReader
+            generator_obj = PCMPacketGenerator (pcm_q, pcm_stream_state)
+            audio_generator = generator_obj.get_bytes()
+
+            for data in audio_generator:    #blocks until there is data
+                break                       #in the audio_generator 
+
+            # the transcription request stream (via a generator)
+            requests = (speech.StreamingRecognizeRequest(audio_content=content)
+                        for content in audio_generator)
+
+            # the transcription response stream (via a generator)
+            responses = streaming_client.streaming_recognize (
+                            streaming_config, requests)
+
+            # forwarding responses to a 'q' that is read/handled by SRTWriter
+            queue_transcription_responses (
+                    responses, 
+                    pcm_stream_state, 
+                    transcription_response_q)
+
+            # control comes here when there are no more responses
+            # this can happen if
+            #   (a) there is no more input (or)
+            #   (b) streaming_recognize cannot process more than this duration
+            #       (in which case we need to set the pcm_stream_state right
+            #        and begin all over again)
+
+            pcm_stream_state.on_iteration_complete()
+
+            main_logger.info("=====RETRY AFTER 5MIN====="
+                             "last_sent={pcm_stream_state.last_sub_pts}")
+
+            lk = pcm_stream_state.get_last_key()
+            if (lk != None):
+                main_logger.info(
+                    f"=====audio_pts_map[{lk}] = "
+                     "{pcm_stream_state.audio_pts_map[lk]}======")
+
+        except google.api_core.exceptions.ServiceUnavailable:
+
+            main_logger.info("=====ServiceUnavailable exception.===RETRY=====")
+            time.sleep (glbl.G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE)
+
+        except:
+
+            main_logger.error(traceback.format_exc())
+            srt_gen.exit_flag = True 
+            generator_obj.exit_flag = True
+            srt_gen.join ()
+            main_logger.info ("## Exited writer")
+            glbl.G_EXIT_FLAG = True
+            break
 
 if __name__ == '__main__':
 
-    global G_EXIT_FLAG
     global main_logger
 
     (dump_def_config, cp) = args.gen_config_from_cmdargs (sys.argv[1:])
     if (dump_def_config):
-        comn.eprint(stt_default_config.stt_default_config_str)
+        comn.eprint(defconf.stt_default_config_str)
         os._exit(0)
 
     glbl.config_2_globals(cp)
@@ -357,12 +410,12 @@ if __name__ == '__main__':
 
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = glbl.G_GCP_AUTH_PATH
     
-    while not G_EXIT_FLAG:
+    while not glbl.G_EXIT_FLAG:
         try:
             main()
             main_logger.info("main() over")
         except KeyboardInterrupt:
-            G_EXIT_FLAG = True
+            glbl.G_EXIT_FLAG = True
             sys.exit(0)
         except:
             main_logger.error(traceback.format_exc())

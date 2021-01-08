@@ -39,8 +39,13 @@ G_RESP_LIST_WORD_MTIME_INDX = 3
 G_EXIT_FLAG = False
 main_logger = None
 
-G_SRT_THREAD_ID   = 1
-G_SRT_THREAD_NAME = "audio_to_srt_1"
+G_SRT_THREAD_ID    = 1
+G_SRT_THREAD_NAME  = "audio_to_srt_1"
+G_LANGUAGE_CODE    = 'en-US'  # a BCP-47 language tag
+G_MAX_PHRASES      = 5000
+G_PHRASES_ENCODING = "utf-8"
+G_MIN_TRANSCRIPTION_STABILITY = 0.85
+G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE = 5
 
 #+-----------+
 #| FUNCTIONS |
