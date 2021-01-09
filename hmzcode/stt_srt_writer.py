@@ -36,7 +36,7 @@ class SRTWriter (threading.Thread):
         self.q = q
         self.verbose_mode = glbl.G_VERBOSE
         self.logger = amg_logger.amagi_logger (
-                        "com.amagi.stt.srt_writer", 
+                        "com.amagi.stt.SRTWriter", 
                         amg_logger.LOG_INFO, 
                         log_stream=glbl.G_LOGGER_STREAM)
         if glbl.G_OFLAGS_APPEND_MODE:

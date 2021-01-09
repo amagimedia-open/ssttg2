@@ -40,7 +40,7 @@ class PacketizedPCMReader(threading.Thread):
         self.last_log_time = time.time()
         self.data_read = 0
         self.logger = logr.amagi_logger (
-                        "com.amagi.stt.packpcm_reader",
+                        "com.amagi.stt.PacketizedPCMReader",
                         logr.LOG_INFO, 
                         log_stream=glbl.G_LOGGER_STREAM)
 
@@ -85,8 +85,9 @@ class PacketizedPCMReader(threading.Thread):
             if (PacketizedPCMReader.audio_header_get_data_length (data)) == 0:
                 self.logger.info ("Received audio packet with length=0")
                 if (glbl.G_IFLAGS_EXIT_ON_ZERO_SIZE):
-                    glbl.G_EXIT_FLAG = True
                     break
+                    #glbl.G_EXIT_FLAG = True
+                    #will exit after the q.put
 
             self.q.put (data)
 

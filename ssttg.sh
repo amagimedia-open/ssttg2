@@ -29,6 +29,7 @@ OPT_VERBOSE=0
 OPT_VERBOSE_ON_TTY=0
 OPT_ADD_SILENCE_SEC=0
 OPT_DEBUG_MODE=0
+OPT_PHRASES_FILEPATH=""
 
 #----[temp files and termination]--------------------------------------------
 
@@ -90,14 +91,14 @@ OPTIONS
           input_media_file_path, packetized with timestamps and transcribed
           to text
         this is optional. default is $OPT_OP.
-        +------------+----------------------------------------------+
-        | operation  |  options ([] => optional)                    |
-        +------------+----------------------------------------------------+
-        | gencfg     |  none                                              |
-        | pcm        |  -i, [-o], [-d], [-x], [-D]                        |
-        | packpcm    |  -i, [-o], [-d], [-x], [-D], [-v]                  |
-        | transcribe |  -i, [-o], [-d], [-x], [-D], -a, [-c], [-v], [-t]  |
-        +------------+----------------------------------------------------+
+        +------------+---------------------------------------------------------+
+        | operation  |  options ([] => optional)                               |
+        +------------+---------------------------------------------------------+
+        | gencfg     |  none                                                   |
+        | pcm        |  -i, [-o], [-d], [-x], [-D]                             |
+        | packpcm    |  -i, [-o], [-d], [-x], [-D], [-v]                       |
+        | transcribe |  -i, [-o], [-d], [-x], [-D], -a, [-c], [-v], [-t], [-p] |
+        +------------+---------------------------------------------------------+
 
     -i  $G_MAPPED_ROOT_PATH/.../input_media_file_path
         A .mp4 or .ts file or any other format recognized by ffmpeg.
@@ -123,6 +124,9 @@ OPTIONS
         Google security credentials file.
         This is mandatory if the operation is 'transcribe' and ignored 
         otherwise.
+
+    -p  $G_MAPPED_ROOT_PATH/.../phrases_filepath.json
+        This is optional.
 
     -c  $G_MAPPED_ROOT_PATH/.../transcribe_config_file_path.ini
         The configuration file used for control of the transcription
@@ -169,7 +173,7 @@ EOD
 # MAIN
 #----------------------------------------------------------------------------
 
-TEMP=`getopt -o "O:i:o:d:a:c:D:s:xvth" -n "$0" -- "$@"`
+TEMP=`getopt -o "O:i:o:d:a:p:c:D:s:xvth" -n "$0" -- "$@"`
 eval set -- "$TEMP"
 
 while true 
@@ -180,6 +184,7 @@ do
         -o) OPT_OUTPUT_FILEPATH="$2"; shift 2;;
         -d) OPT_DEBUG_FILEPATH="$2"; shift 2;;
         -a) OPT_AUTH_FILEPATH="$2"; shift 2;;
+        -p) OPT_PHRASES_FILEPATH="$2"; shift 2;;
         -c) OPT_CONFIG_FILEPATH="$2"; shift 2;;
         -D) OPT_DURATION="$2"; shift 2;;
         -s) OPT_ADD_SILENCE_SEC=$2; shift 2;;
@@ -394,7 +399,8 @@ case $OPT_OP in
                 -i /dev/stdin \
                 -o $OPT_OUTPUT_FILEPATH \
                 -c $OPT_CONFIG_FILEPATH \
-                -a $OPT_AUTH_FILEPATH
+                -a $OPT_AUTH_FILEPATH \
+                -p "$OPT_PHRASES_FILEPATH"
 
         ) 2>$OPT_DEBUG_FILEPATH &
         BG_PID=$!

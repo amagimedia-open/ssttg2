@@ -61,7 +61,8 @@ ssttg.sh \
     -i $TEST_SOURCE_FILE_PATH \
     -o $DIRNAME/out.srt \
     -d $DIRNAME/out_dbg.txt \
-    -a $SSTTG_DEV_ROOT/auth.json
+    -a $SSTTG_DEV_ROOT/auth.json \
+    -p ""
 
 set +x
 
