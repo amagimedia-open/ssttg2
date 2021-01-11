@@ -1,5 +1,5 @@
 + python3 /ssttg/hmzcode/stt_cmdargs.py 1
-generated default config
+using default config
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = /dev/stdin
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = /dev/stdout
 INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
@@ -38,7 +38,7 @@ no_run = False
 
 
 + python3 /ssttg/hmzcode/stt_cmdargs.py 2
-generated default config
+using default config
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
 INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
@@ -93,7 +93,7 @@ val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_nul
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=verbose, value=false
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, value=false
-generated config from /ssttg/test/in/02/test_cfg.ini with defaults
+using config from /ssttg/test/in/02/test_cfg.ini with defaults
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
 INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
@@ -148,7 +148,7 @@ val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OFLAGS, key=append_nul
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=verbose, value=false
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
 val=default, file=/ssttg/test/in/02/test_cfg.ini, section=OTHERS, key=no_run, value=false
-generated config from /ssttg/test/in/02/test_cfg.ini with defaults
+using config from /ssttg/test/in/02/test_cfg.ini with defaults
 INFO, com.amagi.stt.cmdargs, cmdargs: input_audio_path = in.pcm
 INFO, com.amagi.stt.cmdargs, cmdargs: output_srt_path  = out.srt
 INFO, com.amagi.stt.cmdargs, cmdargs: phrases_path     = /mnt/ops/livetranscription/phrases_path
@@ -204,9 +204,17 @@ INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_INDX = 0
 INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_TIME_INDX = 1
 INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_CNSMD_INDX = 2
 INFO, com.amagi.stt.globals, G_RESP_LIST_WORD_MTIME_INDX = 3
-INFO, com.amagi.stt.globals, G_EXIT_FLAG = False
-INFO, com.amagi.stt.globals, G_SRT_THREAD_ID = 1
-INFO, com.amagi.stt.globals, G_SRT_THREAD_NAME = audio_to_srt_1
+INFO, com.amagi.stt.globals, G_PACKPCM_READER_THREAD_ID = 1
+INFO, com.amagi.stt.globals, G_PACKPCM_READER_THREAD_NAME = packpcm_reader
+INFO, com.amagi.stt.globals, G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC = 5
+INFO, com.amagi.stt.globals, G_SRT_WRITER_THREAD_ID = 2
+INFO, com.amagi.stt.globals, G_SRT_WRITER_THREAD_NAME = srt_writer
+INFO, com.amagi.stt.globals, G_SRT_WRITER_Q_READ_TIMEOUT = 0.1
+INFO, com.amagi.stt.globals, G_LANGUAGE_CODE = en-US
+INFO, com.amagi.stt.globals, G_MAX_PHRASES = 5000
+INFO, com.amagi.stt.globals, G_PHRASES_ENCODING = utf-8
+INFO, com.amagi.stt.globals, G_MIN_TRANSCRIPTION_STABILITY = 0.85
+INFO, com.amagi.stt.globals, G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE = 5
 INFO, com.amagi.stt.globals, G_INPUT_AUDIO_PATH = in.pcm
 INFO, com.amagi.stt.globals, G_OUTPUT_SRT_PATH = out.srt
 INFO, com.amagi.stt.globals, G_PHRASES_PATH = /mnt/ops/livetranscription/phrases_path
@@ -224,17 +232,17 @@ INFO, com.amagi.stt.globals, G_VERBOSE = True
 INFO, com.amagi.stt.globals, G_LOGGER_STREAM = stderr
 INFO, com.amagi.stt.globals, G_NO_RUN = False
 + python3 /ssttg/hmzcode/stt_cmdargs.py 5
-usage: stt_cmdargs.py [-h] [-c CONFIG_PATH] [-C] [-i INPUT_AUDIO_PATH]
+usage: stt_cmdargs.py [-h] [-C] [-c CONFIG_PATH] [-i INPUT_AUDIO_PATH]
                       [-o OUTPUT_SRT_PATH] [-p PHRASES_PATH]
                       [-a GCP_AUTH_PATH] [-L LOGGER_STREAM] [-v] [-n]
 
 optional arguments:
   -h, --help            show this help message and exit
+  -C, --dump_def_config
+                        dump the default configuration file to stderr and exit
   -c CONFIG_PATH, --config_path CONFIG_PATH
                         specifies the path to the configuration file to be
                         used
-  -C, --dump_def_config
-                        dump the default configuration file to stderr and exit
   -i INPUT_AUDIO_PATH, --input_audio_path INPUT_AUDIO_PATH
                         overrides ini->[FILES]/input_audio_path
   -o OUTPUT_SRT_PATH, --output_srt_path OUTPUT_SRT_PATH

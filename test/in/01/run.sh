@@ -40,9 +40,9 @@ fi
 set -x
 
 (
-    python3 $SSTTG_DEV_ROOT/hmzcode/stt_config.py 1 
-    python3 $SSTTG_DEV_ROOT/hmzcode/stt_config.py 2 
-    python3 $SSTTG_DEV_ROOT/hmzcode/stt_config.py 3 $DIRNAME/test_cfg.ini
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_config_fnxs.py 1 
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_config_fnxs.py 2 
+    python3 $SSTTG_DEV_ROOT/hmzcode/stt_config_fnxs.py 3 $DIRNAME/test_cfg.ini
 ) 1>$TMP1 2>&1
 
 set +x

@@ -7,7 +7,8 @@ import queue
 import traceback
 from   collections import OrderedDict
 
-import stt_globals as glbl
+import stt_globals     as glbl
+import stt_config_vars as confvars
 import amg_logger
 from   stt_google_response_interface import *
 
@@ -30,27 +31,27 @@ def milliseconds_to_HMS (ms):
 class SRTWriter (threading.Thread):
     def __init__(self, q, pcm_stream_state):
         threading.Thread.__init__(self)
-        self.threadID = glbl.G_SRT_WRITER_THREAD_ID
-        self.name = glbl.G_SRT_WRITER_THREAD_NAME
+        self.threadID = confvars.G_SRT_WRITER_THREAD_ID
+        self.name = confvars.G_SRT_WRITER_THREAD_NAME
 
         self.q = q
         self.pcm_stream_state = pcm_stream_state
-        self.verbose_mode = glbl.G_VERBOSE
+        self.verbose_mode = confvars.G_VERBOSE
         self.logger = amg_logger.amagi_logger (
                         "com.amagi.stt.SRTWriter", 
                         amg_logger.LOG_INFO, 
-                        log_stream=glbl.G_LOGGER_STREAM)
-        if glbl.G_OFLAGS_APPEND_MODE:
+                        log_stream=confvars.G_LOGGER_STREAM)
+        if confvars.G_OFLAGS_APPEND_MODE:
             self.open_mode = "a"
         else:
             self.open_mode = "w"
-        if glbl.G_OFLAGS_APPEND_NULL_CHAR:
+        if confvars.G_OFLAGS_APPEND_NULL_CHAR:
             self.null_char = "\0"
         else:
             self.null_char = ""
         self.last_rcvd_epoch = 0
         self.srt_count = 0
-        self.srt_fname = glbl.G_OUTPUT_SRT_PATH
+        self.srt_fname = confvars.G_OUTPUT_SRT_PATH
         self.last_srt_sub = []#[tcin,tcout,text]
         self.last_consumed_pts = 0
 
@@ -62,7 +63,7 @@ class SRTWriter (threading.Thread):
             self.srt_count += 1
             srt_text = f"{self.srt_count}\n"
             #fp.write (f"{self.srt_count}\n")
-            if False:#len(self.last_srt_sub) > 0 and (tc_in-self.last_srt_sub[1] < glbl.G_REPEAT_SUB_THREASHOLD_MS):
+            if False:#len(self.last_srt_sub) > 0 and (tc_in-self.last_srt_sub[1] < confvars.G_REPEAT_SUB_THREASHOLD_MS):
                 #fp.write (f"{milliseconds_to_HMS (self.last_srt_sub[1])} --> {milliseconds_to_HMS (tc_in+duration_ms)}\n")
                 #fp.write (self.last_srt_sub[2].strip() + "\n")
                 srt_text += f"{milliseconds_to_HMS (self.last_srt_sub[1])} --> {milliseconds_to_HMS (tc_in+duration_ms)}\n"
@@ -83,30 +84,30 @@ class SRTWriter (threading.Thread):
         duration = wr_list[-1] - wr_list[0]
         # < 0.9 to avoid accounting for microseconds added to 
         # distinguish words with same wird-time-offset.
-        duration = duration if duration > 0.9 else glbl.G_MAX_INTER_WORD_DURATION
+        duration = duration if duration > 0.9 else confvars.G_MAX_INTER_WORD_DURATION
         return duration
     
     def can_consume_subtitle (self, time_now):
 
         if len (self.words_list) == 0 or \
-          self.words_list[-1][glbl.G_RESP_LIST_WORD_CNSMD_INDX]:
+          self.words_list[-1][confvars.G_RESP_LIST_WORD_CNSMD_INDX]:
             # last word is consumed.
             return False
 
         min_timeout_since_last_word = max (1.5, \
-                glbl.G_MIN_WORD_DRAIN_DELAY - glbl.G_MAX_SUBTITLE_LINE_DURATION/1000.0)
-        last_word_time = self.words_list[-1][glbl.G_RESP_LIST_WORD_MTIME_INDX]
+                confvars.G_MIN_WORD_DRAIN_DELAY - confvars.G_MAX_SUBTITLE_LINE_DURATION/1000.0)
+        last_word_time = self.words_list[-1][confvars.G_RESP_LIST_WORD_MTIME_INDX]
         for it in self.words_list:
-            if not it[glbl.G_RESP_LIST_WORD_CNSMD_INDX]:
+            if not it[confvars.G_RESP_LIST_WORD_CNSMD_INDX]:
                 # if last-word-time - fist-unconsumed-word-time > Threshold or
                 # if curr-sys-time - first-unconsumed-word-time > Threshold
                 # then consumed 'em.
-                if last_word_time - it[glbl.G_RESP_LIST_WORD_MTIME_INDX] >= (1000.0*glbl.G_MIN_WORD_DRAIN_DELAY) or \
-                    time_now - it[glbl.G_RESP_LIST_WORD_TIME_INDX] >= min_timeout_since_last_word:
+                if last_word_time - it[confvars.G_RESP_LIST_WORD_MTIME_INDX] >= (1000.0*confvars.G_MIN_WORD_DRAIN_DELAY) or \
+                    time_now - it[confvars.G_RESP_LIST_WORD_TIME_INDX] >= min_timeout_since_last_word:
                     self.logger.debug ("mtime diff= %d > global:%d, epoch_diff = %d" %(\
-                            last_word_time - it[glbl.G_RESP_LIST_WORD_MTIME_INDX],\
-                            glbl.G_MIN_WORD_DRAIN_DELAY, \
-                            time_now - it[glbl.G_RESP_LIST_WORD_TIME_INDX]))
+                            last_word_time - it[confvars.G_RESP_LIST_WORD_MTIME_INDX],\
+                            confvars.G_MIN_WORD_DRAIN_DELAY, \
+                            time_now - it[confvars.G_RESP_LIST_WORD_TIME_INDX]))
                     return True
         return False
 
@@ -115,43 +116,43 @@ class SRTWriter (threading.Thread):
         wr_list = []
         duration_ms = 0
         for it in self.words_list:
-            if not it[glbl.G_RESP_LIST_WORD_CNSMD_INDX]:
+            if not it[confvars.G_RESP_LIST_WORD_CNSMD_INDX]:
 
-                if (len (text.strip()) + len (it[glbl.G_RESP_LIST_WORD_INDX]) + 1) > \
-                    glbl.G_MAX_CHARS_IN_SUB_ROW:
+                if (len (text.strip()) + len (it[confvars.G_RESP_LIST_WORD_INDX]) + 1) > \
+                    confvars.G_MAX_CHARS_IN_SUB_ROW:
                     # Case where single word len > line-length.
                     if len (text) == 0:
                         self.logger.warn ("Chopping off word larger than 32 charaters !! - word=" \
-                                + it[glbl.G_RESP_LIST_WORD_INDX].encode('utf-8'))
-                        it[glbl.G_RESP_LIST_WORD_CNSMD_INDX] = True
-                        self.last_consumed_pts = it[glbl.G_RESP_LIST_WORD_MTIME_INDX]
-                        text = text + it[glbl.G_RESP_LIST_WORD_INDX] + " "
-                        text = text[:glbl.G_MAX_CHARS_IN_SUB_ROW]
+                                + it[confvars.G_RESP_LIST_WORD_INDX].encode('utf-8'))
+                        it[confvars.G_RESP_LIST_WORD_CNSMD_INDX] = True
+                        self.last_consumed_pts = it[confvars.G_RESP_LIST_WORD_MTIME_INDX]
+                        text = text + it[confvars.G_RESP_LIST_WORD_INDX] + " "
+                        text = text[:confvars.G_MAX_CHARS_IN_SUB_ROW]
                         wr_list.append (it)
                     # write the SRT.
-                    duration_ms = self.get_duration ([i[glbl.G_RESP_LIST_WORD_MTIME_INDX] for i in wr_list])
-                    self.srt_writer (text.strip(), wr_list[0][glbl.G_RESP_LIST_WORD_MTIME_INDX], duration_ms)
+                    duration_ms = self.get_duration ([i[confvars.G_RESP_LIST_WORD_MTIME_INDX] for i in wr_list])
+                    self.srt_writer (text.strip(), wr_list[0][confvars.G_RESP_LIST_WORD_MTIME_INDX], duration_ms)
                     return
                 else:
                     # Accumulate the line.
                     if len(wr_list) > 0 and \
-                       (it[glbl.G_RESP_LIST_WORD_MTIME_INDX] - \
-                          wr_list[0][glbl.G_RESP_LIST_WORD_MTIME_INDX] > \
-                          glbl.G_MAX_SUBTITLE_LINE_DURATION or \
-                        it[glbl.G_RESP_LIST_WORD_MTIME_INDX] - \
-                          wr_list[-1][glbl.G_RESP_LIST_WORD_MTIME_INDX] > \
-                          glbl.G_MAX_INTER_WORD_DURATION):
+                       (it[confvars.G_RESP_LIST_WORD_MTIME_INDX] - \
+                          wr_list[0][confvars.G_RESP_LIST_WORD_MTIME_INDX] > \
+                          confvars.G_MAX_SUBTITLE_LINE_DURATION or \
+                        it[confvars.G_RESP_LIST_WORD_MTIME_INDX] - \
+                          wr_list[-1][confvars.G_RESP_LIST_WORD_MTIME_INDX] > \
+                          confvars.G_MAX_INTER_WORD_DURATION):
                             break
                     wr_list.append (it)
-                    text = text + it[glbl.G_RESP_LIST_WORD_INDX] + " "
-                    it[glbl.G_RESP_LIST_WORD_CNSMD_INDX] = True
-                    self.last_consumed_pts = it[glbl.G_RESP_LIST_WORD_MTIME_INDX]
+                    text = text + it[confvars.G_RESP_LIST_WORD_INDX] + " "
+                    it[confvars.G_RESP_LIST_WORD_CNSMD_INDX] = True
+                    self.last_consumed_pts = it[confvars.G_RESP_LIST_WORD_MTIME_INDX]
         # will come here when very less text is there to be written.
         # can happen on timeout/long pause or on is_final=True
         if len (text.strip ()) > 0:
             # write the SRT.
-            duration_ms = self.get_duration ([i[glbl.G_RESP_LIST_WORD_MTIME_INDX] for i in wr_list])
-            self.srt_writer (text.strip(), wr_list[0][glbl.G_RESP_LIST_WORD_MTIME_INDX], duration_ms)
+            duration_ms = self.get_duration ([i[confvars.G_RESP_LIST_WORD_MTIME_INDX] for i in wr_list])
+            self.srt_writer (text.strip(), wr_list[0][confvars.G_RESP_LIST_WORD_MTIME_INDX], duration_ms)
 
     def response_to_word_time_offset (self, response, rtime, mapped_time):
         new_response = response.strip().split(" ")
@@ -168,7 +169,7 @@ class SRTWriter (threading.Thread):
         old_list = self.words_list
         # if pivot in old list is incremented for search, then increment
         # l_max_words_to_search till a next solid match is got.
-        l_max_words_to_search = glbl.G_MAX_WORDS_TO_SEARCH
+        l_max_words_to_search = confvars.G_MAX_WORDS_TO_SEARCH
 
         for word in new_response:
             if rl_l == 0:
@@ -176,13 +177,13 @@ class SRTWriter (threading.Thread):
             local_pivot = pivot_in_old_list
             while (local_pivot < rl_l) and local_pivot - pivot_in_old_list < l_max_words_to_search:
                 if word.upper().strip(".").strip(",") == \
-                   old_list[local_pivot][glbl.G_RESP_LIST_WORD_INDX].upper().strip(".").strip(","):
+                   old_list[local_pivot][confvars.G_RESP_LIST_WORD_INDX].upper().strip(".").strip(","):
                     is_word_old.append (True)
                     '''
                     if local_pivot == pivot_in_old_list:#i=0
-                        # if match is found then try to set search words to glbl.G_MAX_WORDS_TO_SEARCH.
+                        # if match is found then try to set search words to confvars.G_MAX_WORDS_TO_SEARCH.
                         l_max_words_to_search -= 1
-                        l_max_words_to_search = max (glbl.G_MAX_WORDS_TO_SEARCH, l_max_words_to_search)
+                        l_max_words_to_search = max (confvars.G_MAX_WORDS_TO_SEARCH, l_max_words_to_search)
                     '''
                     if pivot_in_old_list != local_pivot:
                         self.logger.info ("Found match in old list at a later position, diff=%d" %\
@@ -193,7 +194,7 @@ class SRTWriter (threading.Thread):
                     break
                 else:
                     self.logger.debug ("lp=%d, rl_l=%d, word=%s, old=%s" %(local_pivot, rl_l, word, \
-                        old_list[local_pivot][glbl.G_RESP_LIST_WORD_INDX].upper()))
+                        old_list[local_pivot][confvars.G_RESP_LIST_WORD_INDX].upper()))
                     local_pivot += 1
             else: # Unable to find a word in old words
                 is_word_old.append (False)
@@ -208,7 +209,7 @@ class SRTWriter (threading.Thread):
         If the first word changes,then timestamp of all words are updated,
         But if the first word was already consumed, then it's not done.
         '''
-        if (rl_l > 0 and not old_list[0][glbl.G_RESP_LIST_WORD_CNSMD_INDX] and not is_word_old[0]) or \
+        if (rl_l > 0 and not old_list[0][confvars.G_RESP_LIST_WORD_CNSMD_INDX] and not is_word_old[0]) or \
             len(is_word_old) == 0:
             #print ("--------------------------")
             # Mark everything with new timestamp.
@@ -217,15 +218,15 @@ class SRTWriter (threading.Thread):
             return
         
         i = 0
-        old_rtime = old_list[i][glbl.G_RESP_LIST_WORD_TIME_INDX]
-        old_mtime = old_list[i][glbl.G_RESP_LIST_WORD_MTIME_INDX]
+        old_rtime = old_list[i][confvars.G_RESP_LIST_WORD_TIME_INDX]
+        old_mtime = old_list[i][confvars.G_RESP_LIST_WORD_MTIME_INDX]
         prev_mtime = 0
         for word, is_old in zip(new_words_list, is_word_old):
             is_consumed = False
             if is_old and i < rl_l:
                 # unchanged words are marked with its own pts.
-                old_rtime = old_list[i][glbl.G_RESP_LIST_WORD_TIME_INDX]
-                old_mtime = old_list[i][glbl.G_RESP_LIST_WORD_MTIME_INDX]
+                old_rtime = old_list[i][confvars.G_RESP_LIST_WORD_TIME_INDX]
+                old_mtime = old_list[i][confvars.G_RESP_LIST_WORD_MTIME_INDX]
 
             # changed words are marked with pts of the previous word.
             if old_mtime <= self.last_consumed_pts:
@@ -242,13 +243,13 @@ class SRTWriter (threading.Thread):
             if is_word_old[i]:
                 break
             else:
-                self.words_list[i][glbl.G_RESP_LIST_WORD_TIME_INDX] = rtime
+                self.words_list[i][confvars.G_RESP_LIST_WORD_TIME_INDX] = rtime
                 # +1/1000.0 is to add a few microseconds in order to attach
                 # different and increasing timestamps to each word. 
                 # If more than two new words come in same response, 
                 # we want to give each word different timestamp.
-                self.words_list[i][glbl.G_RESP_LIST_WORD_MTIME_INDX] = mapped_time + i/1000.0
-                self.words_list[i][glbl.G_RESP_LIST_WORD_CNSMD_INDX] = False
+                self.words_list[i][confvars.G_RESP_LIST_WORD_MTIME_INDX] = mapped_time + i/1000.0
+                self.words_list[i][confvars.G_RESP_LIST_WORD_CNSMD_INDX] = False
             i -= 1
 
         self.logger.debug (str(self.words_list))
@@ -262,7 +263,7 @@ class SRTWriter (threading.Thread):
             try:
                 result = None
                 result, rtime = \
-                    self.q.get(timeout=glbl.G_SRT_WRITER_Q_READ_TIMEOUT)
+                    self.q.get(timeout=confvars.G_SRT_WRITER_Q_READ_TIMEOUT)
             except:
                 pass
 
@@ -282,7 +283,7 @@ class SRTWriter (threading.Thread):
                                f"is_final:{result.is_final}"\
                                "\n\n")
                     cur_transcription = result.transcript
-                    cur_timestamp = (self.pcm_stream_state.restart_counter * glbl.G_STREAMING_LIMIT) + \
+                    cur_timestamp = (self.pcm_stream_state.restart_counter * confvars.G_STREAMING_LIMIT) + \
                             result.pts_seconds*1000 + \
                             result.pts_nanos/1000000 - \
                             self.pcm_stream_state.old_data_sent_ms
@@ -297,7 +298,7 @@ class SRTWriter (threading.Thread):
                 if result and result.is_final:
                     self.logger.info (f"=FINAL===={cur_transcription.encode('utf-8')}=====")
                     while len(self.words_list) > 0 and \
-                        (not self.words_list[-1][glbl.G_RESP_LIST_WORD_CNSMD_INDX]):
+                        (not self.words_list[-1][confvars.G_RESP_LIST_WORD_CNSMD_INDX]):
                         self.write ()
                         time.sleep (0.05) #50ms sleep, no specific reason.
                 

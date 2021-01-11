@@ -24,7 +24,8 @@ from   google.cloud import speech
 import stt_commons as comn
 import amg_logger  as logr
 import stt_globals as glbl
-import stt_cmdargs as args
+import stt_config_vars    as confvars
+import stt_cmdargs        as args
 import stt_default_config as defconf
 from   stt_pcm_stream_state import PCMStreamState
 from   stt_packpcm_reader   import PacketizedPCMReader
@@ -42,7 +43,7 @@ class PCMGenerator ():
         self.logger = logr.amagi_logger (
                         "com.amagi.stt.PCMGenerator", 
                         logr.LOG_INFO, 
-                        log_stream=glbl.G_LOGGER_STREAM)
+                        log_stream=confvars.G_LOGGER_STREAM)
         self.logger.info ("PCMGenerator initialized")
 
     def parse_audio_packet (self, data):
@@ -54,16 +55,16 @@ class PCMGenerator ():
         #print (f"{data[4:9].hex()} ========")
         pts = PacketizedPCMReader.audio_header_get_pts (data)
         data_len = PacketizedPCMReader.audio_header_get_data_length (data)
-        running_pts = (self.pcm_stream_state.restart_counter * glbl.G_STREAMING_LIMIT) + self.pcm_stream_state.consumed_ms
+        running_pts = (self.pcm_stream_state.restart_counter * confvars.G_STREAMING_LIMIT) + self.pcm_stream_state.consumed_ms
 
         #print (f"add map[{running_pts}] = {pts}")
         if (pts > 0):
             self.logger.info(f"Received-data: pts={pts}, len={data_len}")
         
         self.pcm_stream_state.update_mapped_audio_pts (running_pts, pts)
-        #print (f"pts:{pts} len:{data_len} {len(data[glbl.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
+        #print (f"pts:{pts} len:{data_len} {len(data[confvars.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
         #print(data[10:data[9]])
-        return data[glbl.G_AUDIO_HEADER_LEN : data_len+glbl.G_AUDIO_HEADER_LEN]
+        return data[confvars.G_AUDIO_HEADER_LEN : data_len+confvars.G_AUDIO_HEADER_LEN]
 
     def get_bytes (self):
 
@@ -72,11 +73,11 @@ class PCMGenerator ():
             yield data
 
         while not glbl.G_EXIT_FLAG and \
-              self.pcm_stream_state.consumed_ms < glbl.G_STREAMING_LIMIT:
+              self.pcm_stream_state.consumed_ms < confvars.G_STREAMING_LIMIT:
 
             data = self.parse_audio_packet (self.q.get ())
             self.pcm_stream_state.push_to_sent_q (data)
-            self.pcm_stream_state.incr_consumed_ms(glbl.G_CHUNK_MS)
+            self.pcm_stream_state.incr_consumed_ms(confvars.G_CHUNK_MS)
             yield data
 
         self.logger.info (f"ending, bytes generated = {self.pcm_stream_state.consumed_ms}")
@@ -108,27 +109,27 @@ class Transcriber():
 
         phrases = []
 
-        if (len(glbl.G_PHRASES_PATH) != 0):
-            with open (glbl.G_PHRASES_PATH, "r", encoding=glbl.G_PHRASES_ENCODING) as fp:
+        if (len(confvars.G_PHRASES_PATH) != 0):
+            with open (confvars.G_PHRASES_PATH, "r", encoding=confvars.G_PHRASES_ENCODING) as fp:
                 for line in fp:
                     if line:
                         phrases.append (line.strip().encode ('ascii', 'ignore').decode('ascii'))
         else:
-            glbl.main_logger.info(f"Phrases file {glbl.G_PHRASES_PATH} is null.")
+            glbl.main_logger.info(f"Phrases file {confvars.G_PHRASES_PATH} is null.")
 
         glbl.main_logger.info(f"Number of phrases as context = {len(phrases)}")
 
-        speech_context = speech.SpeechContext(phrases=phrases[:glbl.G_MAX_PHRASES])
+        speech_context = speech.SpeechContext(phrases=phrases[:confvars.G_MAX_PHRASES])
 
         config = speech.RecognitionConfig(
                     encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                    sample_rate_hertz=glbl.G_AUD_SAMPLING_RATE,
+                    sample_rate_hertz=confvars.G_AUD_SAMPLING_RATE,
                     enable_word_time_offsets=False,
                     model='video',
                     profanity_filter=True,
                     enable_automatic_punctuation=True,
                     speech_contexts=[speech_context],
-                    language_code=glbl.G_LANGUAGE_CODE)
+                    language_code=confvars.G_LANGUAGE_CODE)
 
         speech_config = speech.StreamingRecognitionConfig(
                             config=config,
@@ -155,7 +156,7 @@ class Transcriber():
 
         num_chars_printed = 0
         for response in self.responses:
-            if self.pcm_stream_state.consumed_ms >= glbl.G_STREAMING_LIMIT:
+            if self.pcm_stream_state.consumed_ms >= confvars.G_STREAMING_LIMIT:
                 #pcm_stream_state.stream_time = get_current_time ()
                 glbl.main_logger.info(f"timeout breaking out of responses loop,"
                                   "consumed_ms={self.pcm_stream_state.consumed_ms}")
@@ -174,7 +175,7 @@ class Transcriber():
             
 
             # Display the transcription of the top alternative.
-            if result.stability < glbl.G_MIN_TRANSCRIPTION_STABILITY and \
+            if result.stability < confvars.G_MIN_TRANSCRIPTION_STABILITY and \
                (not result.is_final):
                 continue
 
@@ -262,7 +263,7 @@ class Transcriber():
             except google.api_core.exceptions.ServiceUnavailable:
 
                 glbl.main_logger.info("=====ServiceUnavailable exception.===RETRY=====")
-                time.sleep (glbl.G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE)
+                time.sleep (confvars.G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE)
 
 
     def terminate(self):
@@ -288,7 +289,7 @@ class Transcriber():
     def __init__(self):
 
         # speech api objects
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = glbl.G_GCP_AUTH_PATH
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = confvars.G_GCP_AUTH_PATH
         self.speech_client = speech.SpeechClient()
         self.speech_config = Transcriber.create_speech_config()
 
@@ -297,7 +298,7 @@ class Transcriber():
 
         # the queues
         self.transcription_response_q = queue.Queue ()
-        self.pcm_q = queue.Queue (maxsize=glbl.G_MAX_AUDIO_BUFFER)
+        self.pcm_q = queue.Queue (maxsize=confvars.G_MAX_AUDIO_BUFFER)
 
         # the threads
         self.srt_writer     = SRTWriter (self.transcription_response_q,
@@ -329,18 +330,18 @@ if __name__ == '__main__':
             comn.eprint(defconf.stt_default_config_str)
             os._exit(0)
 
-        glbl.config_2_globals(cp)
+        confvars.config_ini_2_vars(cp)
 
-        if (glbl.G_VERBOSE):
-            glbl.dump_globals()
+        if (confvars.G_VERBOSE):
+            confvars.dump_config_vars()
 
-        if (glbl.G_NO_RUN):
+        if (confvars.G_NO_RUN):
             os._exit(0)
 
         glbl.main_logger = logr.amagi_logger (
                       "com.amagi.stt.main", 
                       logr.LOG_INFO, 
-                      log_stream=glbl.G_LOGGER_STREAM)
+                      log_stream=confvars.G_LOGGER_STREAM)
 
 
         transcriber = Transcriber()

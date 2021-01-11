@@ -2,8 +2,9 @@ import threading
 import queue
 import time
 import traceback
-from collections import OrderedDict
-from stt_globals import *
+from   collections import OrderedDict
+
+import stt_config_vars as confvars
 
 def get_current_time():
     """Return Current Time in MS."""
@@ -16,7 +17,7 @@ class PCMStreamState ():
         self.restart_counter = 0
         self._consumed_ms = 0
         self.last_iter_consumed_ms = 0
-        self.max_sent_audio_q_len = 500 / G_CHUNK_MS
+        self.max_sent_audio_q_len = 500 / confvars.G_CHUNK_MS
         self.sent_audio_q = queue.Queue ()
         self.sent_q_head_pts = 0
         self._last_sub_pts = 0
@@ -46,34 +47,34 @@ class PCMStreamState ():
         self.sent_audio_q.put (data)
         while self.sent_audio_q.qsize () > self.max_sent_audio_q_len:
             self.sent_audio_q.get ()
-            self.sent_q_head_pts += G_CHUNK_MS
+            self.sent_q_head_pts += confvars.G_CHUNK_MS
 
     def get_data_from_pts (self):
         data = None
-        pts = self._last_sub_pts + (self.restart_counter-1) * G_STREAMING_LIMIT
+        pts = self._last_sub_pts + (self.restart_counter-1) * confvars.G_STREAMING_LIMIT
         hpts = self.sent_q_head_pts
-        tpts = hpts + (self.sent_audio_q.qsize () * G_CHUNK_MS)
-        print (f"get_data_from_pts ,pts={pts} hpts={hpts} tpts={tpts} == {pts < hpts or pts > tpts and tpts-pts >= G_CHUNK_MS}")
-        if pts < hpts or pts > tpts or (tpts-pts) < G_CHUNK_MS:
+        tpts = hpts + (self.sent_audio_q.qsize () * confvars.G_CHUNK_MS)
+        print (f"get_data_from_pts ,pts={pts} hpts={hpts} tpts={tpts} == {pts < hpts or pts > tpts and tpts-pts >= confvars.G_CHUNK_MS}")
+        if pts < hpts or pts > tpts or (tpts-pts) < confvars.G_CHUNK_MS:
             return data
 
         # Drain extra data
         while self.sent_q_head_pts < pts:
             self.sent_audio_q.get ()
-            self.sent_q_head_pts += G_CHUNK_MS 
+            self.sent_q_head_pts += confvars.G_CHUNK_MS 
 
         # Drain data to be resent
         data_l = []
         while self.sent_audio_q.qsize () > 0:
             data = self.sent_audio_q.get ()
             data_l.append (data)
-            self.sent_q_head_pts += G_CHUNK_MS 
+            self.sent_q_head_pts += confvars.G_CHUNK_MS 
             #print (f"Getting a CHUNKKKKKKKKKKK {len(data)}")
 
         if data_l:
             data = b''.join(data_l)
             
-        self.old_data_sent_ms = len(data) / G_BYTE_PER_SAMPLE / (G_AUD_SAMPLING_RATE/1000)
+        self.old_data_sent_ms = len(data) / confvars.G_BYTE_PER_SAMPLE / (confvars.G_AUD_SAMPLING_RATE/1000)
         print (f"Resending {self.old_data_sent_ms} ms data")
 
         return data

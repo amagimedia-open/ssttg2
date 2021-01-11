@@ -14,9 +14,10 @@ from google.cloud import speech
 #from google.cloud.speech import enums
 #from google.cloud.speech import types
 
-import stt_commons as comn
-import amg_logger  as logr
-import stt_globals as glbl
+import stt_commons     as comn
+import amg_logger      as logr
+import stt_globals     as glbl
+import stt_config_vars as confvars
 
 class PacketizedPCMReader(threading.Thread):
 
@@ -30,19 +31,19 @@ class PacketizedPCMReader(threading.Thread):
 
     def __init__ (self, q):
         threading.Thread.__init__(self)
-        self.threadID = glbl.G_PACKPCM_READER_THREAD_ID
-        self.name = glbl.G_PACKPCM_READER_THREAD_NAME
+        self.threadID = confvars.G_PACKPCM_READER_THREAD_ID
+        self.name = confvars.G_PACKPCM_READER_THREAD_NAME
 
-        self.fname = glbl.G_INPUT_AUDIO_PATH
+        self.fname = confvars.G_INPUT_AUDIO_PATH
         self.fp = open (self.fname, mode="rb")
-        self.chunk = glbl.G_CHUNK_SIZE_BYTES 
+        self.chunk = confvars.G_CHUNK_SIZE_BYTES 
         self.q = q
         self.last_log_time = time.time()
         self.data_read = 0
         self.logger = logr.amagi_logger (
                         "com.amagi.stt.PacketizedPCMReader",
                         logr.LOG_INFO, 
-                        log_stream=glbl.G_LOGGER_STREAM)
+                        log_stream=confvars.G_LOGGER_STREAM)
 
     def get_sync_byte_position (self, data):
         sync_byte = 'c0ffeeee'
@@ -50,9 +51,9 @@ class PacketizedPCMReader(threading.Thread):
         return int(data.hex().find (sync_byte)/2)
 
     def re_align (self,old_data, sync_pos):
-        if len(old_data) - sync_pos >= glbl.G_AUDIO_HEADER_LEN:
+        if len(old_data) - sync_pos >= confvars.G_AUDIO_HEADER_LEN:
             data_len = PacketizedPCMReader.audio_header_get_data_length (old_data[sync_pos:])
-            old_data_len = len (old_data) - sync_pos - glbl.G_AUDIO_HEADER_LEN
+            old_data_len = len (old_data) - sync_pos - confvars.G_AUDIO_HEADER_LEN
             self.logger.info (f"{data_len} ol={old_data_len}")
             new_data = self.fp.read (data_len-old_data_len)
             final_data = old_data[sync_pos:] + new_data
@@ -63,11 +64,11 @@ class PacketizedPCMReader(threading.Thread):
 
         while not glbl.G_EXIT_FLAG:
             #time.sleep(0.01)
-            data = self.fp.read (self.chunk+glbl.G_AUDIO_HEADER_LEN)
-            self.data_read += glbl.G_CHUNK_MS
+            data = self.fp.read (self.chunk+confvars.G_AUDIO_HEADER_LEN)
+            self.data_read += confvars.G_CHUNK_MS
             now = time.time ()
-            if now - self.last_log_time >= glbl.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC:
-                self.logger.info (f"Data read in last {glbl.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC*1000} ms is {self.data_read} bytes")
+            if now - self.last_log_time >= confvars.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC:
+                self.logger.info (f"Data read in last {confvars.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC*1000} ms is {self.data_read} bytes")
                 self.data_read = 0
                 self.last_log_time = now
             if data and data[0:4].hex() != 'c0ffeeee':
@@ -84,7 +85,7 @@ class PacketizedPCMReader(threading.Thread):
             #    print ('Got syncbyte')
             if (PacketizedPCMReader.audio_header_get_data_length (data)) == 0:
                 self.logger.info ("Received audio packet with length=0")
-                if (glbl.G_IFLAGS_EXIT_ON_ZERO_SIZE):
+                if (confvars.G_IFLAGS_EXIT_ON_ZERO_SIZE):
                     break
                     #glbl.G_EXIT_FLAG = True
                     #will exit after the q.put

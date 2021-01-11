@@ -1,9 +1,9 @@
-+ python3 /ssttg/hmzcode/stt_config.py 1
++ python3 /ssttg/hmzcode/stt_config_fnxs.py 1
 [FILES]
 input_audio_path = /dev/stdin
 output_srt_path = /dev/stdout
-gcp_auth_path = /mnt/ops/livetranscription/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
 
 [TRANSLATION]
 min_word_drain_delay_sec = 3.0
@@ -27,7 +27,34 @@ logger_stream = stderr
 [OTHERS]
 no_run = false
 
-+ python3 /ssttg/hmzcode/stt_config.py 2
++ python3 /ssttg/hmzcode/stt_config_fnxs.py 2
+
+
+#
+#  Thu Jan  7 13:31:48 IST 2021
+#
+#  +--------------------------+
+#  | streaming speech to text |
+#  |     configuration        |
+#  +--------------------------+
+#
+#  +-----------------------------------+   --+
+#  |default configuration              |     |
+#  |(base)                             |     |
+#  |  +----------------------------+   |     |
+#  |  | specific configuration     |   |     |
+#  |  | (override 1)               |   |     |final
+#  |  | (-c)                       |   |     |configuration
+#  |  | (optional)                 |   |     |
+#  |  |   +----------------------+ |   |     |
+#  |  |   | command line options | |   |     |
+#  |  |   | (override 2)         | |   |     |
+#  |  |   | (-i,-o, ...)         | |   |     |
+#  |  |   | (optional)           | |   |     | 
+#  |  |   +----------------------+ |   |     |
+#  |  +----------------------------+   |     |
+#  +-----------------------------------+   --+
+#
 
 [FILES]
 
@@ -36,19 +63,24 @@ input_audio_path = /dev/stdin
     # the input wav file path encoded as pcm_s16le at 16000 Hz
     # this by default is stdin. it could also be the path to a
     # named pipe.
+    # can override with : -i option
 
 output_srt_path = /dev/stdout
 
     # the output srt file path
+    # can override with : -o option
+
+phrases_path = /mnt/ops/livetranscription/phrases_path
+
+    # the phrases file path needed by gcp speech-to-text api
+    # can override with : -p option
 
 gcp_auth_path = /mnt/ops/livetranscription/auth.json
 
     # the auth file path in json format needed by gcp 
     # speech-to-text api
+    # can override with : -a option
 
-phrases_path = /mnt/ops/livetranscription/phrases_path
-
-    # the phrases file path needed by gcp speech-to-text api
 
 #-------------------------------------------------------------------
 
@@ -114,10 +146,13 @@ append_null_char=true
 verbose=false
 
     # verboseness needed for debugging. values are true|false.
+    # can override with : -v option
+
 
 logger_stream=stderr
 
     # values are stderr|syslog
+    # can override with : -L option
 
 #-------------------------------------------------------------------
 
@@ -127,12 +162,13 @@ no_run=false
 
     # does not run the program. useful to check configuration.
     # values are true|false
+    # can override with : -n option
 
-+ python3 /ssttg/hmzcode/stt_config.py 3 /ssttg/test/in/01/test_cfg.ini
++ python3 /ssttg/hmzcode/stt_config_fnxs.py 3 /ssttg/test/in/01/test_cfg.ini
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=input_audio_path, value=/dev/stdin
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=output_srt_path, value=/dev/stdout
-val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=phrases_path, value=/mnt/ops/livetranscription/phrases_path
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=FILES, key=gcp_auth_path, value=/mnt/ops/livetranscription/auth.json
 val=infile,  file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=min_word_drain_delay_sec, value=4.0
 val=infile,  file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_inter_word_duration_ms, value=900
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_subtitle_line_duration_ms, value=1500
@@ -148,8 +184,8 @@ val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OTHERS, key=no_run, va
 [FILES]
 input_audio_path = /dev/stdin
 output_srt_path = /dev/stdout
-gcp_auth_path = /mnt/ops/livetranscription/auth.json
 phrases_path = /mnt/ops/livetranscription/phrases_path
+gcp_auth_path = /mnt/ops/livetranscription/auth.json
 
 [TRANSLATION]
 min_word_drain_delay_sec = 4.0

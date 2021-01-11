@@ -10,14 +10,15 @@ import io
 import sys
 
 import amg_logger
-import stt_config
+import stt_config_fnxs
 import stt_commons
 import stt_globals
+import stt_config_vars
 import stt_default_config
 
 def set_default_cmdarg_values (cmdargs_parser):
 
-    default_config = stt_config.DefaultSttConfig().get_config_parser()
+    default_config = stt_config_fnxs.DefaultSttConfig().get_config_parser()
 
     # -c, -C is not part of the configuration
 
@@ -161,7 +162,7 @@ def gen_config_from_cmdargs (argv):
 
         # read the configuration with defaults supplied from
         # default configuration
-        cp = stt_config.generate_with_defaults (cmdargs.config_path, cmdargs.verbose)
+        cp = stt_config_fnxs.generate_with_defaults (cmdargs.config_path, cmdargs.verbose)
 
         if (cmdargs.verbose):
             stt_commons.eprint(f"using config from {cmdargs.config_path} with defaults")
@@ -169,7 +170,7 @@ def gen_config_from_cmdargs (argv):
     else:
 
         # use the default configuration
-        cp = stt_config.DefaultSttConfig().get_config_parser()
+        cp = stt_config_fnxs.DefaultSttConfig().get_config_parser()
 
         if (cmdargs.verbose):
             stt_commons.eprint(f"using default config")
@@ -264,8 +265,8 @@ def utest4():
             "--config_path",      sys.argv[2]]
 
     (dump_def_config, cp) = gen_config_from_cmdargs (argv)
-    stt_globals.config_2_globals(cp)
-    stt_globals.dump_globals()
+    stt_config_vars.config_ini_2_vars(cp)
+    stt_config_vars.dump_config_vars()
 
 def utest5():
     """
