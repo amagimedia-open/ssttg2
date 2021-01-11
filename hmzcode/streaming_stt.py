@@ -290,15 +290,13 @@ class Transcriber():
             self.packpcm_reader.join()
             glbl.main_logger.info ("packpcm_reader ended")
 
+        glbl.main_logger.info ("await_termination() completed")
+
 
     def __init__(self):
 
-        self.srt_writer_started = False
-        self.packpcm_reader_started = False
-
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = glbl.G_GCP_AUTH_PATH
-
         # speech api objects
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = glbl.G_GCP_AUTH_PATH
         self.speech_client = speech.SpeechClient()
         self.speech_config = Transcriber.create_speech_config()
 
@@ -316,64 +314,67 @@ class Transcriber():
 
     def run(self):
 
-        try:
-            self.srt_writer.start ()
-            self.srt_writer_started = True
-            glbl.main_logger.info ("srt_writer started")
+        self.srt_writer.start ()
 
-            self.packpcm_reader.start ()
-            self.packpcm_reader_started = True
-            glbl.main_logger.info ("packpcm_reader started")
+        self.packpcm_reader.start ()
 
-            self.perform_transcription ()
+        self.perform_transcription ()
 
-            glbl.main_logger.info("main() over")
-
-        #except google.auth.exceptions.DefaultCredentialsError:
-        #except FileNotFoundError:
-        #glbl.main_logger.error(traceback.format_exc())
-
-        except KeyboardInterrupt:
-
-            glbl.main_logger.error("KeyboardInterrupt")
-            self.terminate()
-
-        except Exception as e:
-
-            glbl.main_logger.error(traceback.format_exc())
-            self.terminate()
-
-        finally:
-
-            self.await_termination()
 
 #----------------------------------------------------------------------------
 
 if __name__ == '__main__':
 
-    (dump_def_config, cp) = args.gen_config_from_cmdargs (sys.argv[1:])
+    transcriber = None
+    glbl.main_logger = None
 
-    if (dump_def_config):
-        comn.eprint(defconf.stt_default_config_str)
-        os._exit(0)
+    try:
 
-    glbl.config_2_globals(cp)
+        (dump_def_config, cp) = args.gen_config_from_cmdargs (sys.argv[1:])
 
-    if (glbl.G_VERBOSE):
-        glbl.dump_globals()
+        if (dump_def_config):
+            comn.eprint(defconf.stt_default_config_str)
+            os._exit(0)
 
-    if (glbl.G_NO_RUN):
-        os._exit(0)
+        glbl.config_2_globals(cp)
 
-    glbl.main_logger = logr.amagi_logger (
-                  "com.amagi.stt.main", 
-                  logr.LOG_INFO, 
-                  log_stream=glbl.G_LOGGER_STREAM)
+        if (glbl.G_VERBOSE):
+            glbl.dump_globals()
+
+        if (glbl.G_NO_RUN):
+            os._exit(0)
+
+        glbl.main_logger = logr.amagi_logger (
+                      "com.amagi.stt.main", 
+                      logr.LOG_INFO, 
+                      log_stream=glbl.G_LOGGER_STREAM)
 
 
-    transcriber = Transcriber()
-    transcriber.run()
+        transcriber = Transcriber()
+        transcriber.run()
 
-    glbl.main_logger.info ("### Exitting Main")
+        glbl.main_logger.info ("### Ending transcribe normally")
+
+    except Exception as e:
+        #except google.auth.exceptions.DefaultCredentialsError:
+        #except FileNotFoundError:
+
+        if (glbl.main_logger != None):
+            glbl.main_logger.error(traceback.format_exc())
+        if (transcriber != None):
+            transcriber.terminate()
+
+    except KeyboardInterrupt:
+
+        if (glbl.main_logger != None):
+            glbl.main_logger.error("KeyboardInterrupt")
+        if (transcriber != None):
+            transcriber.terminate()
+
+    finally:
+
+        if (transcriber != None):
+            transcriber.await_termination()
+
     os._exit(0)
 
