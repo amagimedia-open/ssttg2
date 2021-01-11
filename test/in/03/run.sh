@@ -49,9 +49,10 @@ then
     exit 2
 fi
 
-set -x
+rm -vf $DIRNAME/out.srt $DIRNAME/out_dbg.txt
 
-# -x \
+#set -x
+
 ssttg.sh \
     -O transcribe \
     -x \
@@ -64,12 +65,5 @@ ssttg.sh \
     -a $SSTTG_DEV_ROOT/auth.json \
     -p ""
 
-set +x
-
-
-#if ! diff $DIRNAME/out.srt $DIRNAME/out.srt.gold >/dev/null 2>&1
-#then
-#    error_message "output differing from $DIRNAME/out.srt.gold"
-#    exit 2
-#fi
+#set +x
 

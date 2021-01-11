@@ -371,9 +371,15 @@ case $OPT_OP in
         ((OPT_VERBOSE)) && { DEPACK_VERBOSITY="-vv"; }
         ((OPT_VERBOSE)) && { TRANSCRIBE_VERBOSITY="-v"; }
 
-        ((OPT_VERBOSE_ON_TTY)) && \
-            { echo "starting ffmpeg|pack|depack|streaming_stt ..." > /dev/tty; }
-        sleep 2
+        BG_PID=0
+        if ((OPT_VERBOSE_ON_TTY))
+        then
+            #(while :; do sleep 5; done) &
+            (cat < /dev/tty; ) &
+            BG_PID=$!
+
+            stdbuf -o 0 tail --pid=$BG_PID -f $OPT_DEBUG_FILEPATH 1>/dev/tty & 
+        fi
 
         (
             ((OPT_DEBUG_MODE)) && { set -x; }
@@ -402,13 +408,11 @@ case $OPT_OP in
                 -a $OPT_AUTH_FILEPATH \
                 -p "$OPT_PHRASES_FILEPATH"
 
-        ) 2>$OPT_DEBUG_FILEPATH &
-        BG_PID=$!
+        ) 2>$OPT_DEBUG_FILEPATH
 
-        if ((OPT_VERBOSE_ON_TTY))
+        if ((BG_PID > 0))
         then
-            echo "starting tail ..." > /dev/tty
-            stdbuf -o 0 tail --pid=$BG_PID -f $OPT_DEBUG_FILEPATH 1>/dev/tty & 
+            kill $BG_PID
         fi
 
         stty sane
