@@ -60,9 +60,7 @@ class PCMGenerator ():
         if (pts > 0):
             self.logger.info(f"Received-data: pts={pts}, len={data_len}")
         
-        self.pcm_stream_state.audio_pts_map_lock.acquire ()
-        self.pcm_stream_state.audio_pts_map[running_pts] = pts
-        self.pcm_stream_state.audio_pts_map_lock.release ()
+        self.pcm_stream_state.update_mapped_audio_pts (running_pts, pts)
         #print (f"pts:{pts} len:{data_len} {len(data[glbl.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
         #print(data[10:data[9]])
         return data[glbl.G_AUDIO_HEADER_LEN : data_len+glbl.G_AUDIO_HEADER_LEN]
@@ -76,16 +74,10 @@ class PCMGenerator ():
         while not glbl.G_EXIT_FLAG and \
               self.pcm_stream_state.consumed_ms < glbl.G_STREAMING_LIMIT:
 
-            #try:
             data = self.parse_audio_packet (self.q.get ())
             self.pcm_stream_state.push_to_sent_q (data)
             self.pcm_stream_state.incr_consumed_ms(glbl.G_CHUNK_MS)
             yield data
-
-            #except:
-            #    glbl.main_logger.error(traceback.format_exc())
-            #    break
-            #    #os._exit(1)
 
         self.logger.info (f"ending, bytes generated = {self.pcm_stream_state.consumed_ms}")
 
@@ -194,7 +186,7 @@ class Transcriber():
             transcript = result.alternatives[0].transcript
             amg_result = ResponeInterface ()
             google_response_to_amg (result, amg_result)
-            self.transcription_response_q.put ([self.pcm_stream_state, amg_result, time_now])
+            self.transcription_response_q.put ([amg_result, time_now])
 
             result_end_time_ms = result.result_end_time.seconds*1000 + \
                                  result.result_end_time.microseconds/1000
@@ -308,7 +300,8 @@ class Transcriber():
         self.pcm_q = queue.Queue (maxsize=glbl.G_MAX_AUDIO_BUFFER)
 
         # the threads
-        self.srt_writer     = SRTWriter (self.transcription_response_q)
+        self.srt_writer     = SRTWriter (self.transcription_response_q,
+                                         self.pcm_stream_state)
         self.packpcm_reader = PacketizedPCMReader (self.pcm_q)
 
 

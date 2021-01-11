@@ -28,12 +28,13 @@ def milliseconds_to_HMS (ms):
     return ret
 
 class SRTWriter (threading.Thread):
-    def __init__(self, q):
+    def __init__(self, q, pcm_stream_state):
         threading.Thread.__init__(self)
         self.threadID = glbl.G_SRT_WRITER_THREAD_ID
         self.name = glbl.G_SRT_WRITER_THREAD_NAME
 
         self.q = q
+        self.pcm_stream_state = pcm_stream_state
         self.verbose_mode = glbl.G_VERBOSE
         self.logger = amg_logger.amagi_logger (
                         "com.amagi.stt.SRTWriter", 
@@ -259,8 +260,8 @@ class SRTWriter (threading.Thread):
         while not glbl.G_EXIT_FLAG:
 
             try:
-                result = stream = None
-                stream, result, rtime = \
+                result = None
+                result, rtime = \
                     self.q.get(timeout=glbl.G_SRT_WRITER_Q_READ_TIMEOUT)
             except:
                 pass
@@ -281,11 +282,11 @@ class SRTWriter (threading.Thread):
                                f"is_final:{result.is_final}"\
                                "\n\n")
                     cur_transcription = result.transcript
-                    cur_timestamp = (stream.restart_counter * glbl.G_STREAMING_LIMIT) + \
+                    cur_timestamp = (self.pcm_stream_state.restart_counter * glbl.G_STREAMING_LIMIT) + \
                             result.pts_seconds*1000 + \
                             result.pts_nanos/1000000 - \
-                            stream.old_data_sent_ms
-                    cur_timestamp = stream.get_mapped_audio_pts (cur_timestamp)
+                            self.pcm_stream_state.old_data_sent_ms
+                    cur_timestamp = self.pcm_stream_state.get_mapped_audio_pts (cur_timestamp)
 
                     self.response_to_word_time_offset (result.transcript, \
                             rtime, cur_timestamp)

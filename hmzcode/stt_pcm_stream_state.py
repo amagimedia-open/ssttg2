@@ -37,6 +37,10 @@ class PCMStreamState ():
         #print (f"$$$ ----{self.audio_pts_map[key]}  ---- {self.audio_pts_map[key] + inp_pts - key}")
         return self.audio_pts_map[key] + inp_pts - key
 
+    def update_mapped_audio_pts (self, running_pts, pts):
+        self.audio_pts_map_lock.acquire ()
+        self.audio_pts_map[running_pts] = pts
+        self.audio_pts_map_lock.release ()
 
     def push_to_sent_q (self, data):
         self.sent_audio_q.put (data)
