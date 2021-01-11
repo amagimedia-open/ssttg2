@@ -87,7 +87,7 @@ class PCMGenerator ():
             #    break
             #    #os._exit(1)
 
-        self.logger.info (f"PCMGenerator ending, bytes put = {self.pcm_stream_state.consumed_ms}")
+        self.logger.info (f"ending, bytes generated = {self.pcm_stream_state.consumed_ms}")
 
 #----------------------------------------------------------------------------
 

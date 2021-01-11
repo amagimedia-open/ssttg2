@@ -374,7 +374,6 @@ case $OPT_OP in
         BG_PID=0
         if ((OPT_VERBOSE_ON_TTY))
         then
-            #(while :; do sleep 5; done) &
             (cat < /dev/tty; ) &
             BG_PID=$!
 

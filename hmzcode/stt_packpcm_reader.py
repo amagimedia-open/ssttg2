@@ -64,10 +64,10 @@ class PacketizedPCMReader(threading.Thread):
         while not glbl.G_EXIT_FLAG:
             #time.sleep(0.01)
             data = self.fp.read (self.chunk+glbl.G_AUDIO_HEADER_LEN)
-            self.data_read += 32
+            self.data_read += glbl.G_CHUNK_MS
             now = time.time ()
-            if now - self.last_log_time >= 5:
-                self.logger.info (f"Data read in last 5000ms is {self.data_read}ms")
+            if now - self.last_log_time >= glbl.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC:
+                self.logger.info (f"Data read in last {glbl.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC*1000} ms is {self.data_read} bytes")
                 self.data_read = 0
                 self.last_log_time = now
             if data and data[0:4].hex() != 'c0ffeeee':
