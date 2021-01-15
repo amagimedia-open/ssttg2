@@ -10,7 +10,7 @@ MODNAME=$(basename $0)
 
 G_MAPPED_ROOT_PATH=/data
 G_HMZCODE_FOLDER_PATH="${DIRNAME}/hmzcode"
-G_DEF_CONFIG_FILEPATH="$G_HMZCODE_FOLDER_PATH/stt_cfg.ini"
+G_CONFIG_OPT=""
 
 #----[sources]---------------------------------------------------------------
 
@@ -23,7 +23,7 @@ OPT_INPUT_FILEPATH=""
 OPT_OUTPUT_FILEPATH=""
 OPT_AUTH_FILEPATH=""
 OPT_PHRASES_FILEPATH=""
-OPT_CONFIG_FILEPATH="$G_DEF_CONFIG_FILEPATH"
+OPT_CONFIG_FILEPATH=""
 OPT_DEBUG_FILEPATH="$G_MAPPED_ROOT_PATH/err_dbg.txt"
 OPT_DURATION=""
 OPT_VERBOSE=0
@@ -61,7 +61,6 @@ SYNOPSIS
              [-d $G_MAPPED_ROOT_PATH/.../output_debug_file_path]
              [-a $G_MAPPED_ROOT_PATH/.../auth_file_path.json] 
              [-c $G_MAPPED_ROOT_PATH/.../config_file_path.ini] 
-             [-x]
              [-h]
 
 DESCRIPTION
@@ -96,15 +95,15 @@ OPTIONS
 
         this is optional. default is $OPT_OP.
 
-        +---------------+---------------------------------------------------------+
-        | operation     |  options ([] => optional)                               |
-        +---------------+---------------------------------------------------------+
-        | gencfg        |  none                                                   |
-        | pcm           |  -i, [-o], [-d],     [-x], [-D]                         |
-        | packpcm       |  -i, [-o], [-d],     [-x], [-D], [-v], [-s]             |
-        | transcribe    |  -i, [-o], [-d], -a, [-x], [-D], [-v], [-s], [-c], [-t] |
-        | transcribepcm |      [-o], [-d], -a, [-x],       [-v],       [-c]       |
-        +---------------+---------------------------------------------------------+
+        +---------------+---------------------------------------------------+
+        | operation     |  options ([] => optional)                         |
+        +---------------+---------------------------------------------------+
+        | gencfg        |  none                                             |
+        | pcm           |  -i, [-o], [-d],     [-D]                         |
+        | packpcm       |  -i, [-o], [-d],     [-D], [-v], [-s]             |
+        | transcribe    |  -i, [-o], [-d], -a, [-D], [-v], [-s], [-c], [-t] |
+        | transcribepcm |      [-o], [-d], -a,       [-v],       [-c]       |
+        +---------------+---------------------------------------------------+
 
     -i  $G_MAPPED_ROOT_PATH/.../input_media_file_path
         A .mp4 or .ts file or any other format recognized by ffmpeg.
@@ -271,10 +270,15 @@ case $OPT_OP in
             exit 1
         fi
 
-        if [[ ! -f $OPT_CONFIG_FILEPATH ]]
+        if [[ -n $OPT_CONFIG_FILEPATH ]]
         then
-            error_message "file $OPT_CONFIG_FILEPATH not present"
-            exit 1
+            if [[ ! -f $OPT_CONFIG_FILEPATH ]]
+            then
+                error_message "file $OPT_CONFIG_FILEPATH not present"
+                exit 1
+            fi
+
+            G_CONFIG_OPT=" -c $OPT_CONFIG_FILEPATH "
         fi
         ;;
 esac
@@ -407,7 +411,7 @@ case $OPT_OP in
                 $TRANSCRIBE_VERBOSITY \
                 -i /dev/stdin \
                 -o $OPT_OUTPUT_FILEPATH \
-                -c $OPT_CONFIG_FILEPATH \
+                $G_CONFIG_OPT \
                 -a $OPT_AUTH_FILEPATH \
                 -p "$OPT_PHRASES_FILEPATH"
 
@@ -448,7 +452,7 @@ case $OPT_OP in
                 $TRANSCRIBE_VERBOSITY \
                 -i /dev/stdin \
                 -o $OPT_OUTPUT_FILEPATH \
-                -c $OPT_CONFIG_FILEPATH \
+                $G_CONFIG_OPT \
                 -a $OPT_AUTH_FILEPATH \
                 -p "$OPT_PHRASES_FILEPATH"
 
