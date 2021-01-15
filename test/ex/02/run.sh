@@ -14,11 +14,10 @@ AUTH_JSON_FILE_PATH=$(readlink -e $DIRNAME/../../../auth.json)
 
 mkdir -p $DATADIR
 
-rm -f $DATADIR/out.srt \
-      $DATADIR/out_dbg.txt
+rm -f $DATADIR/*
 
-cp sstt_testclip_20_sec.mp4 $DATADIR
-cp auth.json $DATADIR
+cp $TEST_CLIP_FILE_PATH $DATADIR
+cp $AUTH_JSON_FILE_PATH $DATADIR
 
 docker run \
         --rm \

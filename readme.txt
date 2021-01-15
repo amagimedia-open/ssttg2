@@ -15,7 +15,6 @@ Version 2.0
     $ ./ssttg_dev_run_ut_in_docker.sh
     $ tree ./test/in   # see results here
 
------- ignore lines below -------
 
 +-------------+
 | For release |
@@ -28,5 +27,6 @@ Version 2.0
 (B) Have a look-at/try the following
 
     test/ex/01/run.sh
+    test/ex/02/run.sh
     test/ex/02/run.sh
 
