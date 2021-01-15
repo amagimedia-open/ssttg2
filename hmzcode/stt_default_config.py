@@ -108,7 +108,7 @@ append_mode=true
     # If true, opens the output (srt) file in append mode. 
     # default is write (overwrite) mode.
 
-append_null_char=true
+append_null_char=false
 
     # If true, appends the ascii null char after each 
     # line of srt output

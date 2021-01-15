@@ -1,5 +1,6 @@
 Streaming speech to text transcription using google apis.
-Version 1.0
+Based on Hamza's new code (with refactoring).
+Version 2.0
 
 +-----------------+
 | For development |
@@ -12,7 +13,9 @@ Version 1.0
 (B) To run unit test cases 
 
     $ ./ssttg_dev_run_ut_in_docker.sh
-    $ tree ./test   # see results here
+    $ tree ./test/in   # see results here
+
+------ ignore lines below -------
 
 +-------------+
 | For release |

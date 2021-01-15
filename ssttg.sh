@@ -29,7 +29,6 @@ OPT_DURATION=""
 OPT_VERBOSE=0
 OPT_VERBOSE_ON_TTY=0
 OPT_ADD_SILENCE_SEC=0
-OPT_DEBUG_MODE=0
 
 #----[temp files and termination]--------------------------------------------
 
@@ -144,11 +143,6 @@ OPTIONS
         This is optional (i.e. optional even if the operation is 'transcribe'
         in which case it uses a default configuration 'coded' internally).
 
-    -x
-        Enables 'set -x' for this script.
-        This is optional. If enabled it is preferable to specify this as
-        the first option.
-
     -D  HH:MM:SS
         Restrics audio from input_media_file_path to the first #secs.
         This is optional.
@@ -197,7 +191,6 @@ do
         -c) OPT_CONFIG_FILEPATH="$2"; shift 2;;
         -D) OPT_DURATION="$2"; shift 2;;
         -s) OPT_ADD_SILENCE_SEC=$2; shift 2;;
-        -x) OPT_DEBUG_MODE=1; set -x; shift 1;;
         -v) OPT_VERBOSE=1; shift 1;;
         -t) OPT_VERBOSE_ON_TTY=1; shift 1;;
         -h) usage; exit 0;;
@@ -392,7 +385,7 @@ case $OPT_OP in
         fi
 
         (
-            ((OPT_DEBUG_MODE)) && { set -x; }
+            ((OPT_VERBOSE)) && { set -x; }
 
             ffmpeg \
                 -loglevel quiet \
@@ -440,7 +433,7 @@ case $OPT_OP in
         ((OPT_VERBOSE)) && { TRANSCRIBE_VERBOSITY="-v"; }
 
         (
-            ((OPT_DEBUG_MODE)) && { set -x; }
+            ((OPT_VERBOSE)) && { set -x; }
 
             # pcm is supplied to audio_packetizer via stdin
 

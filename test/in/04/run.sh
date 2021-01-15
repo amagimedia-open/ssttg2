@@ -3,6 +3,13 @@
 set -u
 #set -x
 
+#----[options]------------------------------------------------------------------------
+
+OPT_DURATION=""
+OPT_ADD_SILENCE_SEC=2
+#TEST_SOURCE_FILE_PATH=$SSTTG_DEV_ROOT/curiosity_1c_16k_10m.aac
+#TEST_SOURCE_FILE_PATH=$SSTTG_DEV_ROOT/curiosity.aac
+
 #----[globals]------------------------------------------------------------------------
 
 DIRNAME=$(dirname $(readlink -e $0))
@@ -51,21 +58,40 @@ fi
 
 rm -f $DIRNAME/out.srt $DIRNAME/out_dbg.txt
 
-#set -x 
+#set -x
 
-    #-t
+FFMPEG_ADD_SILENCE_OPTS=""
+if ((OPT_ADD_SILENCE_SEC > 0))
+then
+    #https://superuser.com/a/579110
+    FFMPEG_ADD_SILENCE_OPTS="
+        -f lavfi 
+        -t $OPT_ADD_SILENCE_SEC 
+        -i anullsrc=r=16000 
+        -filter_complex [0:a][1:a]concat=n=2:v=0:a=1"
+fi
 
-ssttg.sh \
-    -O transcribe \
-    -v \
-    -s 5 \
+ffmpeg \
+    -loglevel quiet \
+    -re \
     -i $TEST_SOURCE_FILE_PATH \
+    $FFMPEG_ADD_SILENCE_OPTS \
+    $OPT_DURATION \
+    -acodec pcm_s16le -ac 1 -ar 16k \
+    -f s16le \
+    pipe:1 \
+|\
+ssttg.sh \
+    -O transcribepcm \
+    -v \
     -o $DIRNAME/out.srt \
     -d $DIRNAME/out_dbg.txt \
     -a $SSTTG_DEV_ROOT/auth.json \
     -p ""
 
-#set +x
+    #-t
+
+stty sane
 
 if ! diff $DIRNAME/out.srt $DIRNAME/out.srt.gold
 then
@@ -75,4 +101,6 @@ fi
 
 info_message "passed"
 exit 0
+
+#set +x
 

@@ -4,6 +4,7 @@ import time
 import traceback
 from   collections import OrderedDict
 
+import amg_logger      as logr
 import stt_config_vars as confvars
 
 def get_current_time():
@@ -24,6 +25,10 @@ class PCMStreamState ():
         self.old_data_sent_ms = 0
         self.audio_pts_map = OrderedDict () # 0_pts:actual:pts
         self.audio_pts_map_lock = threading.Lock ()
+        self.logger = logr.amagi_logger (
+                        "com.amagi.stt.PCMStreamState",
+                        logr.LOG_INFO, 
+                        log_stream=confvars.G_LOGGER_STREAM)
 
     def get_mapped_audio_pts (self, inp_pts):
         self.audio_pts_map_lock.acquire()
@@ -54,7 +59,7 @@ class PCMStreamState ():
         pts = self._last_sub_pts + (self.restart_counter-1) * confvars.G_STREAMING_LIMIT
         hpts = self.sent_q_head_pts
         tpts = hpts + (self.sent_audio_q.qsize () * confvars.G_CHUNK_MS)
-        print (f"get_data_from_pts ,pts={pts} hpts={hpts} tpts={tpts} == {pts < hpts or pts > tpts and tpts-pts >= confvars.G_CHUNK_MS}")
+        self.logger.info (f"get_data_from_pts ,pts={pts} hpts={hpts} tpts={tpts} == {pts < hpts or pts > tpts and tpts-pts >= confvars.G_CHUNK_MS}")
         if pts < hpts or pts > tpts or (tpts-pts) < confvars.G_CHUNK_MS:
             return data
 
@@ -75,7 +80,7 @@ class PCMStreamState ():
             data = b''.join(data_l)
             
         self.old_data_sent_ms = len(data) / confvars.G_BYTE_PER_SAMPLE / (confvars.G_AUD_SAMPLING_RATE/1000)
-        print (f"Resending {self.old_data_sent_ms} ms data")
+        self.logger.info(f"Resending {self.old_data_sent_ms} ms data")
 
         return data
       

@@ -18,7 +18,7 @@ last_log_time_quanta_ms = 5
 
 [OFLAGS]
 append_mode = true
-append_null_char = true
+append_null_char = false
 
 [LOGGING]
 verbose = false
@@ -134,7 +134,7 @@ append_mode=true
     # If true, opens the output (srt) file in append mode. 
     # default is write (overwrite) mode.
 
-append_null_char=true
+append_null_char=false
 
     # If true, appends the ascii null char after each 
     # line of srt output
@@ -177,7 +177,7 @@ val=default, file=/ssttg/test/in/01/test_cfg.ini, section=TRANSLATION, key=max_w
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=IFLAGS, key=exit_on_zero_size, value=true
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=IFLAGS, key=last_log_time_quanta_ms, value=5
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OFLAGS, key=append_mode, value=true
-val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OFLAGS, key=append_null_char, value=true
+val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OFLAGS, key=append_null_char, value=false
 val=infile,  file=/ssttg/test/in/01/test_cfg.ini, section=LOGGING, key=verbose, value=true
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=LOGGING, key=logger_stream, value=stderr
 val=default, file=/ssttg/test/in/01/test_cfg.ini, section=OTHERS, key=no_run, value=false
@@ -200,7 +200,7 @@ last_log_time_quanta_ms = 5
 
 [OFLAGS]
 append_mode = true
-append_null_char = true
+append_null_char = false
 
 [LOGGING]
 verbose = true

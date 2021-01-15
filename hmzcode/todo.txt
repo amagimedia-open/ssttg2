@@ -1,0 +1,1 @@
+(a) cleaner log handling factoring log level at command line

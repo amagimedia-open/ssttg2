@@ -59,6 +59,7 @@ class SRTWriter (threading.Thread):
         self.words_list = []#[ (word, epoch_time_rcvd_at, is consumed, timestamp), ()... ]
   
     def srt_writer (self, text, tc_in, duration_ms):
+        #self.logger.info (f"srt_fname = {self.srt_fname}, open_mode = {self.open_mode}")
         with open (self.srt_fname, self.open_mode) as fp:
             self.srt_count += 1
             srt_text = f"{self.srt_count}\n"
@@ -76,6 +77,7 @@ class SRTWriter (threading.Thread):
             #fp.write (str(srt_text)+"\0")
             #fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii').upper()+self.null_char)
             fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii'))
+            fp.flush ()
             self.logger.info ("srt_out: " + srt_text.replace("\n", " "))#.encode('utf-8'))
             #self.logger.info (srt_text.encode('utf-8'))
             self.last_srt_sub = [tc_in, tc_in+duration_ms, text]
