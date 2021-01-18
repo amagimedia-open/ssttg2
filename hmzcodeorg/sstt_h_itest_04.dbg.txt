@@ -1,0 +1,100 @@
++ (( 1 ))
++ debug_message 'starting docker ...'
++ local '_message=starting docker ...'
+++ basename /home/ksridhar/amagi/repos/mimas/speech_to_text/sstt_h_convert.sh
++ echo 'sstt_h_convert.sh:debug:starting docker ...'
+sstt_h_convert.sh:debug:starting docker ...
++ container_pid=16347
++ docker run -i --rm --privileged --network host --name sstt_convert_container -v /home/ksridhar/amagi/repos/mimas/speech_to_text:/sstt -e COMMON_BASH_FUNCTIONS=/sstt/common-bash-functions.sh -w /sstt sstt python3 sstt_d_convert.py -v -f -c /sstt/s__2020_11_02_17_40_46_298826139/config.ini -a /sstt/s__2020_11_02_17_40_46_298826139/auth.json -i /sstt/s__2020_11_02_17_40_46_298826139/in_pcm_fifo -o /sstt/s__2020_11_02_17_40_46_298826139/out_srt.txt
++ stdbuf -o 0 tail --pid=16347 -f /home/ksridhar/amagi/repos/mimas/speech_to_text/s__2020_11_02_17_40_46_298826139/out_srt.txt
++ stdbuf -o 0 cat
++ sstt_h_audio_depacketizer -z -f -v
+{'TRANSLATION': {'timeout_seconds': '3', 'repeat_sub_threashold_ms': '1000', 'write_after_characters_recvd': '150', 'max_sub_chars': '30', 'streaming_limit': '240000', 'min_sub_duration_ms': '400', 'max_sub_duration_ms': '4000'}, 'FILES': {'phrases_path': '', 'input_audio_path': '/sstt/s__2020_11_02_17_40_46_298826139/in_pcm_fifo', 'output_srt_path': '/sstt/s__2020_11_02_17_40_46_298826139/out_srt.txt', 'gcp_auth_path': '/sstt/s__2020_11_02_17_40_46_298826139/auth.json'}}
+#--- Fixed Audio recording parameters ---
+G_BYTE_PER_SAMPLE =  2
+G_AUD_SAMPLING_RATE =  16000
+G_CHUNK_MS =  32
+G_CHUNK_SIZE_BYTES =  1024
+#--- Fixed Input packet parameters ---
+G_AUDIO_HEADER_LEN =  14
+#--- Translation process parameters ---
+G_TIMEOUT_SECONDS =  3
+G_TIMEOUT_MSECONDS =  3000
+G_REPEAT_SUB_THREASHOLD_MS =  1000
+G_WRITE_AFTER_CHARACTERS_RECVD =  150
+G_MAX_SUB_CHARS =  30
+G_STREAMING_LIMIT =  240000
+G_MIN_SUB_DURATION_MS =  400
+G_MAX_SUB_DURATION_MS =  4000
+G_MAX_AUDIO_BUFFER =  31.25
+Starting audio_to_srt_1
+Number of phrases as context = 2
+get_data_from_pts ,pts=-240000 hpts=0 tpts=0 == True
+info:sstt_h_audio_depacketizer:before run:ctx{
+   <<options>>
+   opt_input_filepath = 
+   opt_output_filepath = 
+   opt_eof_on_zero_size = 1
+   opt_forward_mode = 1
+   opt_verbose = 1
+   input_is_fifo = 0
+   output_is_fifo = 0
+   <<state>>
+   in_fp = 0x7f9140739a00
+   out_fd = 1
+   num_packets_read = 0
+   in_offset = 0
+}
+b'1\n0000000:00:02,470 --> 0000000:00:03,430\nOne Martinez getting us\n\n'
+Data read in last 5000ms is 7296ms
+b'2\n0000000:00:03,430 --> 0000000:00:06,310\nunderway to the blue mixed in\n\n'
+b'3\n0000000:00:06,310 --> 0000000:00:08,350\nwith that blood red of\n\n'
+Data read in last 5000ms is 5024ms
+b'4\n0000000:00:08,350 --> 0000000:00:10,750\nosasuna looking to draw early\n\n'
+b'5\n0000000:00:10,750 --> 0000000:00:11,710\nblood against yellow clad\n\n'
+b'6\n0000000:00:11,710 --> 0000000:00:14,830\nBarcelona the Shane alongside\n\n'
+Data read in last 5000ms is 5024ms
+Got misalignment, aligning to 164, test=b're Hudson with you here today. Glad you could join us'
+b'7\n0000000:00:15,430 --> 0000000:00:16,750\nre Hudson with you here today.\n\n'
+info:sstt_h_audio_depacketizer:breaking out on 0 size
+info:sstt_h_audio_depacketizer:before end:ctx{
+   <<options>>
+   opt_input_filepath = 
+   opt_output_filepath = 
+   opt_eof_on_zero_size = 1
+   opt_forward_mode = 1
+   opt_verbose = 1
+   input_is_fifo = 0
+   output_is_fifo = 0
+   <<state>>
+   in_fp = 0x7f9140739a00
+   out_fd = 1
+   num_packets_read = 626
+   in_offset = 648750
+}
++ set +x
+sstt_h_convert.sh:debug:end of input seen
+Exiting generator, bytes put = 240000
+sstt_h_convert.sh:debug:terminating ...
+sstt_h_convert.sh:debug:stopping docker ...
+timeout breaking out of responses loop, consumed_ms=240000
+b'One Martinez getting us underway to the blue mixed in with that blood-red of osasuna looking to draw early blood against yellow clad Barcelona the Shane alongside Ray Hudson with you here today. Glad you could join us course. Feel free to hit the'
+=FINAL====b'One Martinez getting us underway to the blue mixed in with that blood-red of osasuna looking to draw early blood against yellow clad Barcelona the Shane alongside Ray Hudson with you here today. Glad you could join us course. Feel free to hit the'=====
+===============RETRY AFTER 5MIN======last_sent=19940.0
+===audio_pts_map[239968] = 0===========
+get_data_from_pts ,pts=19940.0 hpts=239520 tpts=240000 == True
+Data read in last 5000ms is 223744ms
+b'8\n0000000:00:16,750 --> 0000000:00:18,310\nGlad you could join us\n\n'
+b'9\n0000000:00:18,310 --> 0000000:00:18,710\ncourse. Feel free to hit the\n\n'
+b'#F\n#0000000:00:02,470 --> 0000000:00:18,940\n#One Martinez getting us underway to the blue mixed in with that blood-red of osasuna looking to draw early blood against yellow clad Barcelona the Shane alongside Ray Hudson with you here today. Glad you could join us course. Feel free to hit the\n\n'
+Exiting generator, bytes put = 240000
+===============RETRY AFTER 5MIN======last_sent=19940.0
+===audio_pts_map[479968] = 0===========
+get_data_from_pts ,pts=259940.0 hpts=479520 tpts=480000 == True
+Exiting generator, bytes put = 240000
+===============RETRY AFTER 5MIN======last_sent=19940.0
+===audio_pts_map[719968] = 0===========
+get_data_from_pts ,pts=499940.0 hpts=719520 tpts=720000 == True
+986dee003a86
+sstt_h_convert.sh:debug:removing session folder ...
+sstt_h_convert.sh:debug:removing temporary files ...
