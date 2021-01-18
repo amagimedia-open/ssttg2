@@ -16,6 +16,7 @@ DIRNAME=$(dirname $(readlink -e $0))
 MODNAME=$(basename $0)
 DATADIR=$DIRNAME/testdata
 TEST_CLIP_FILE_PATH=$(readlink -e $DIRNAME/../../../sstt_testclip_20_sec.mp4)
+#TEST_CLIP_FILE_PATH=$(readlink -e $DIRNAME/../../../curiosity.aac)
 AUTH_JSON_FILE_PATH=$(readlink -e $DIRNAME/../../../auth.json)
 
 mkdir -p $DATADIR
