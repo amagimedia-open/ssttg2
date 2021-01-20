@@ -1,6 +1,7 @@
 import threading
 import queue
 import time
+import sys
 import traceback
 from collections import OrderedDict
 from stt_globals import *

@@ -100,6 +100,6 @@ fi
         -c $DIRNAME/stt_cfg.ini         \
         -a $AUTH_JSON_FILE_PATH         \
         -d $DIRNAME/t_data/t_gcp_response.txt
-) 2>$DIRNAME/t_data/t_dbg.srt
+) 2>$DIRNAME/t_data/t_dbg.txt
 
 stty sane
