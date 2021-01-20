@@ -53,6 +53,12 @@ fi
 mkdir -p $DIRNAME/t_data
 rm -vf $DIRNAME/t_data/*
 
+FFMPEG_DURATION_OPT=""
+if [[ -n ${OPT_DURATION-""} ]] 
+then
+    FFMPEG_DURATION_OPT=" -t ${OPT_DURATION} "
+fi
+
 FFMPEG_ADD_SILENCE_OPTS=""
 if ((OPT_ADD_SILENCE_SEC > 0))
 then
@@ -74,7 +80,7 @@ fi
         -re                             \
         -i $TEST_CLIP_FILE_PATH         \
         $FFMPEG_ADD_SILENCE_OPTS        \
-        $OPT_DURATION                   \
+        $FFMPEG_DURATION_OPT            \
         -vn                             \
         -acodec pcm_s16le -ac 1 -ar 16k \
         -f s16le                        \

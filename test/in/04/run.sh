@@ -60,6 +60,12 @@ rm -f $DIRNAME/out.srt $DIRNAME/out_dbg.txt
 
 #set -x
 
+FFMPEG_DURATION_OPT=""
+if [[ -n ${OPT_DURATION-""} ]] 
+then
+    FFMPEG_DURATION_OPT=" -t ${OPT_DURATION} "
+fi
+
 FFMPEG_ADD_SILENCE_OPTS=""
 if ((OPT_ADD_SILENCE_SEC > 0))
 then
@@ -76,7 +82,7 @@ ffmpeg \
     -re \
     -i $TEST_SOURCE_FILE_PATH \
     $FFMPEG_ADD_SILENCE_OPTS \
-    $OPT_DURATION \
+    $FFMPEG_DURATION_OPT \
     -acodec pcm_s16le -ac 1 -ar 16k \
     -f s16le \
     pipe:1 \

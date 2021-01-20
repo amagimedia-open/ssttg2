@@ -59,7 +59,7 @@ class PCMGenerator ():
 
         #print (f"add map[{running_pts}] = {pts}")
         if (pts > 0):
-            self.logger.info(f"Received-data: pts={pts}, len={data_len}")
+            self.logger.info(f"Received-data, pts={pts}, len={data_len}")
         
         self.pcm_stream_state.update_mapped_audio_pts (running_pts, pts)
         #print (f"pts:{pts} len:{data_len} {len(data[confvars.G_AUDIO_HEADER_LEN:data_len+G_AUDIO_HEADER_LEN])}========")
@@ -80,7 +80,7 @@ class PCMGenerator ():
             self.pcm_stream_state.incr_consumed_ms(confvars.G_CHUNK_MS)
             yield data
 
-        self.logger.info (f"ending, bytes generated = {self.pcm_stream_state.consumed_ms}")
+        self.logger.info (f"ending, bytes_generated={self.pcm_stream_state.consumed_ms}")
 
 #----------------------------------------------------------------------------
 
@@ -117,7 +117,7 @@ class Transcriber():
         else:
             glbl.main_logger.info(f"Phrases file {confvars.G_PHRASES_PATH} is null.")
 
-        glbl.main_logger.info(f"Number of phrases as context = {len(phrases)}")
+        glbl.main_logger.info(f"phrases as context, num={len(phrases)}")
 
         speech_context = speech.SpeechContext(phrases=phrases[:confvars.G_MAX_PHRASES])
 
@@ -158,7 +158,7 @@ class Transcriber():
         for response in self.responses:
             if self.pcm_stream_state.consumed_ms >= confvars.G_STREAMING_LIMIT:
                 #pcm_stream_state.stream_time = get_current_time ()
-                glbl.main_logger.info(f"timeout breaking out of responses loop,"
+                glbl.main_logger.info(f"timeout breaking out of responses loop, "
                                   "consumed_ms={self.pcm_stream_state.consumed_ms}")
                 #break
 
@@ -252,7 +252,7 @@ class Transcriber():
 
                 self.pcm_stream_state.on_iteration_complete()
 
-                glbl.main_logger.info("=====RETRY AFTER 5MIN====="
+                glbl.main_logger.info("RETRY AFTER 5MIN, "
                                  "last_sent={self.pcm_stream_state.last_sub_pts}")
 
                 lk = self.pcm_stream_state.get_last_key()
@@ -262,7 +262,9 @@ class Transcriber():
 
             except google.api_core.exceptions.ServiceUnavailable:
 
-                glbl.main_logger.info("=====ServiceUnavailable exception.===RETRY=====")
+                glbl.main_logger.info(
+                    f"ServiceUnavailable exception, "\
+                    f"retry_after_sec={confvars.G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE}")
                 time.sleep (confvars.G_RETRY_DURATION_SEC_ON_SERVICE_UNAVAILABLE)
 
 

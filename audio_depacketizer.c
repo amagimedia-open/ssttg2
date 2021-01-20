@@ -199,7 +199,7 @@ init_state
         if (ctx->opt_verbose)
         {
             fprintf (stderr, 
-                     "%s:info:opened input \"%s\"\n", 
+                     "%s:info: opened-input, path=\"%s\"\n", 
                      ctx->progname,
                      ctx->opt_input_filepath);
         }
@@ -225,7 +225,7 @@ init_state
         if (ctx->opt_verbose)
         {
             fprintf (stderr, 
-                     "%s:info:opened output \"%s\"\n", 
+                     "%s:info: opened-output, path=\"%s\"\n", 
                      ctx->progname,
                      ctx->opt_output_filepath);
         }
@@ -255,7 +255,7 @@ uninit_state
         if (ctx->opt_verbose)
         {
             fprintf (stderr, 
-                     "%s:info:closed input \"%s\"\n", 
+                     "%s:info: closed-input, path=\"%s\"\n", 
                      ctx->progname,
                      ctx->opt_input_filepath);
         }
@@ -271,7 +271,7 @@ uninit_state
         if (ctx->opt_verbose)
         {
             fprintf (stderr, 
-                     "%s:info:closed output \"%s\"\n", 
+                     "%s:info: closed-output, path=\"%s\"\n", 
                      ctx->progname,
                      ctx->opt_output_filepath);
         }
@@ -538,7 +538,7 @@ run
             time(&t);
 
             fprintf (stderr, 
-                     "%s:info:time=%u, pkt#=%08u, sig=%08x, ts=%016lu, sz=%08u\n", 
+                     "%s:info: pkt-details, time=%u, pkt#=%08u, sig=%08x, ts=%016lu, sz=%08u\n", 
                      ctx->progname, (unsigned) t, ctx->num_packets_read, sig, ts, size);
             fflush (stderr);
         }
@@ -557,7 +557,7 @@ run
             if (ctx->opt_verbose)
             {
                 fprintf (stderr, 
-                         "%s:info:breaking out on 0 size\n", 
+                         "%s:info: breaking-out-on-0-size\n", 
                          ctx->progname);
             }
             break;

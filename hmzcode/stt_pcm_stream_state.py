@@ -59,7 +59,7 @@ class PCMStreamState ():
         pts = self._last_sub_pts + (self.restart_counter-1) * confvars.G_STREAMING_LIMIT
         hpts = self.sent_q_head_pts
         tpts = hpts + (self.sent_audio_q.qsize () * confvars.G_CHUNK_MS)
-        self.logger.info (f"get_data_from_pts ,pts={pts} hpts={hpts} tpts={tpts} == {pts < hpts or pts > tpts and tpts-pts >= confvars.G_CHUNK_MS}")
+        self.logger.info (f"get_data_from_pts, pts={pts}, hpts={hpts}, tpts={tpts}, status={pts < hpts or pts > tpts and tpts-pts >= confvars.G_CHUNK_MS}")
         if pts < hpts or pts > tpts or (tpts-pts) < confvars.G_CHUNK_MS:
             return data
 
@@ -80,7 +80,7 @@ class PCMStreamState ():
             data = b''.join(data_l)
             
         self.old_data_sent_ms = len(data) / confvars.G_BYTE_PER_SAMPLE / (confvars.G_AUD_SAMPLING_RATE/1000)
-        self.logger.info(f"Resending {self.old_data_sent_ms} ms data")
+        self.logger.info(f"Resending, data_ms={self.old_data_sent_ms}")
 
         return data
       

@@ -78,7 +78,7 @@ class SRTWriter (threading.Thread):
             #fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii').upper()+self.null_char)
             fp.write (srt_text.encode ('ascii', 'ignore').decode('ascii'))
             fp.flush ()
-            self.logger.info ("srt_out: " + srt_text.replace("\n", " "))#.encode('utf-8'))
+            self.logger.info ("srt_out, text=" + srt_text.replace("\n", " "))#.encode('utf-8'))
             #self.logger.info (srt_text.encode('utf-8'))
             self.last_srt_sub = [tc_in, tc_in+duration_ms, text]
 
@@ -106,7 +106,8 @@ class SRTWriter (threading.Thread):
                 # then consumed 'em.
                 if last_word_time - it[confvars.G_RESP_LIST_WORD_MTIME_INDX] >= (1000.0*confvars.G_MIN_WORD_DRAIN_DELAY) or \
                     time_now - it[confvars.G_RESP_LIST_WORD_TIME_INDX] >= min_timeout_since_last_word:
-                    self.logger.debug ("mtime diff= %d > global:%d, epoch_diff = %d" %(\
+                    self.logger.debug (
+                            "mtime, diff=%d, >, global=%d, epoch_diff=%d" %(\
                             last_word_time - it[confvars.G_RESP_LIST_WORD_MTIME_INDX],\
                             confvars.G_MIN_WORD_DRAIN_DELAY, \
                             time_now - it[confvars.G_RESP_LIST_WORD_TIME_INDX]))
@@ -124,7 +125,8 @@ class SRTWriter (threading.Thread):
                     confvars.G_MAX_CHARS_IN_SUB_ROW:
                     # Case where single word len > line-length.
                     if len (text) == 0:
-                        self.logger.warn ("Chopping off word larger than 32 charaters !! - word=" \
+                        self.logger.warn (
+                                "Chopping off word larger than 32 charaters !!, word=" \
                                 + it[confvars.G_RESP_LIST_WORD_INDX].encode('utf-8'))
                         it[confvars.G_RESP_LIST_WORD_CNSMD_INDX] = True
                         self.last_consumed_pts = it[confvars.G_RESP_LIST_WORD_MTIME_INDX]
@@ -188,21 +190,23 @@ class SRTWriter (threading.Thread):
                         l_max_words_to_search = max (confvars.G_MAX_WORDS_TO_SEARCH, l_max_words_to_search)
                     '''
                     if pivot_in_old_list != local_pivot:
-                        self.logger.info ("Found match in old list at a later position, diff=%d" %\
+                        self.logger.info (
+                                "Found match in old list at a later position, diff=%d" %\
                                 (local_pivot-pivot_in_old_list))
                         l_max_words_to_search += (local_pivot-pivot_in_old_list)
                     local_pivot += 1
                     pivot_in_old_list = local_pivot
                     break
                 else:
-                    self.logger.debug ("lp=%d, rl_l=%d, word=%s, old=%s" %(local_pivot, rl_l, word, \
+                    self.logger.debug (
+                        "pivot, lp=%d, rl_l=%d, word=%s, old=%s" %(local_pivot, rl_l, word, \
                         old_list[local_pivot][confvars.G_RESP_LIST_WORD_INDX].upper()))
                     local_pivot += 1
             else: # Unable to find a word in old words
                 is_word_old.append (False)
 
         if len (is_word_old) > 0 and len (is_word_old) != tl_l:
-            self.logger.warn (f"Marked list and word list are not of same length, {len (is_word_old)} != {tl_l}")
+            self.logger.warn (f"Marked list and word list are not of same length, {len (is_word_old)}!={tl_l}")
             raise (f"Marked list and word list are not of same length")
         #print (self.last_consumed_pts)
         self.logger.debug (str(is_word_old))
@@ -276,14 +280,14 @@ class SRTWriter (threading.Thread):
                         #fp.write (str(result).replace("\n", " ") + f"Time:{rtime}")
                         #fp.write (f"\n==FINAL={result.is_final}==\n")
                         self.logger.info (\
-                               f"transcript:{result.transcript};; "\
-                               f"transcript:{result.transcript};; "\
-                               f"stability:{result.stability};; "\
-                               f"end_sec:{result.pts_seconds};; "\
-                               f"end_nanos:{result.pts_nanos};; "\
-                               f"time:{rtime};; "\
-                               f"is_final:{result.is_final}"\
+                               f"transcript={result.transcript};; "\
+                               f"stability={result.stability};; "\
+                               f"end_sec={result.pts_seconds};; "\
+                               f"end_nanos={result.pts_nanos};; "\
+                               f"time={rtime};; "\
+                               f"is_final={result.is_final}"\
                                "\n\n")
+
                     cur_transcription = result.transcript
                     cur_timestamp = (self.pcm_stream_state.restart_counter * confvars.G_STREAMING_LIMIT) + \
                             result.pts_seconds*1000 + \

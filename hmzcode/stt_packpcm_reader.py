@@ -54,7 +54,7 @@ class PacketizedPCMReader(threading.Thread):
         if len(old_data) - sync_pos >= confvars.G_AUDIO_HEADER_LEN:
             data_len = PacketizedPCMReader.audio_header_get_data_length (old_data[sync_pos:])
             old_data_len = len (old_data) - sync_pos - confvars.G_AUDIO_HEADER_LEN
-            self.logger.info (f"{data_len} ol={old_data_len}")
+            self.logger.info (f"realign, data_len={data_len}, old_data_len={old_data_len}")
             new_data = self.fp.read (data_len-old_data_len)
             final_data = old_data[sync_pos:] + new_data
             self.q.put (final_data)
@@ -68,7 +68,7 @@ class PacketizedPCMReader(threading.Thread):
             self.data_read += confvars.G_CHUNK_MS
             now = time.time ()
             if now - self.last_log_time >= confvars.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC:
-                self.logger.info (f"Data read in last {confvars.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC*1000} ms is {self.data_read} bytes")
+                self.logger.info (f"Data read, last_ms={confvars.G_PACKPCM_READER_DATA_LOGGING_FREQ_SEC*1000}, bytes={self.data_read}")
                 self.data_read = 0
                 self.last_log_time = now
             if data and data[0:4].hex() != 'c0ffeeee':
@@ -84,7 +84,7 @@ class PacketizedPCMReader(threading.Thread):
             #else:
             #    print ('Got syncbyte')
             if (PacketizedPCMReader.audio_header_get_data_length (data)) == 0:
-                self.logger.info ("Received audio packet with length=0")
+                self.logger.info ("Received audio packet with length 0")
                 if (confvars.G_IFLAGS_EXIT_ON_ZERO_SIZE):
                     break
                     #glbl.G_EXIT_FLAG = True
